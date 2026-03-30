@@ -222,7 +222,8 @@ CREATE TABLE `user`  (
   UNIQUE INDEX `uq_user_email`(`email` ASC) USING BTREE,
   UNIQUE INDEX `uq_user_phone`(`phone` ASC) USING BTREE,
   INDEX `idx_user_status`(`status` ASC) USING BTREE,
-  INDEX `idx_user_created_at`(`created_at` ASC) USING BTREE
+  INDEX `idx_user_created_at`(`created_at` ASC) USING BTREE,
+  CONSTRAINT `uq_email` UNIQUE(email)
 ) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;
