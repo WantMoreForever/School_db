@@ -114,8 +114,8 @@ CREATE TABLE `section`  (
 -- ----------------------------
 -- Table structure for section_restriction
 -- ----------------------------
-DROP TABLE IF EXISTS `section_restriction`;
-CREATE TABLE `section_restriction`  (
+DROP TABLE IF EXISTS `restriction`;
+CREATE TABLE `restriction`  (
   `section_id` int(10) UNSIGNED NOT NULL COMMENT '开课节',
   `dept_id` int(10) UNSIGNED NOT NULL COMMENT '允许选修的院系',
   PRIMARY KEY (`section_id`, `dept_id`) USING BTREE,
@@ -127,8 +127,8 @@ CREATE TABLE `section_restriction`  (
 -- ----------------------------
 -- Table structure for section_schedule
 -- ----------------------------
-DROP TABLE IF EXISTS `section_schedule`;
-CREATE TABLE `section_schedule`  (
+DROP TABLE IF EXISTS `schedule`;
+CREATE TABLE `schedule`  (
   `schedule_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `section_id` int(10) UNSIGNED NOT NULL COMMENT '关联的开课节',
   `day_of_week` tinyint(3) UNSIGNED NOT NULL COMMENT '星期几 (1=周一, 7=周日)',
