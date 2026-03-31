@@ -1,0 +1,228 @@
+/*
+ Navicat Premium Data Transfer
+
+ Source Server         : localhost_3306
+ Source Server Type    : MySQL
+ Source Server Version : 80012 (8.0.12)
+ Source Host           : localhost:3306
+ Source Schema         : school_db
+
+ Target Server Type    : MySQL
+ Target Server Version : 80012 (8.0.12)
+ File Encoding         : 65001
+
+ Date: 30/03/2026 18:31:50
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for admin
+-- ----------------------------
+DROP TABLE IF EXISTS `admin`;
+CREATE TABLE `admin`  (
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'admin' COMMENT '管理员角色',
+  PRIMARY KEY (`user_id`) USING BTREE,
+  CONSTRAINT `fk_admin_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for advisor
+-- ----------------------------
+DROP TABLE IF EXISTS `advisor`;
+CREATE TABLE `advisor`  (
+  `teacher_id` int(10) UNSIGNED NOT NULL COMMENT '导师',
+  `student_id` int(10) UNSIGNED NOT NULL COMMENT '学生',
+  PRIMARY KEY (`teacher_id`, `student_id`) USING BTREE,
+  INDEX `idx_advisor_student`(`student_id` ASC) USING BTREE,
+  CONSTRAINT `fk_advisor_student` FOREIGN KEY (`student_id`) REFERENCES `student` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_advisor_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for course
+-- ----------------------------
+DROP TABLE IF EXISTS `course`;
+CREATE TABLE `course`  (
+  `course_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '课程名称',
+  `credit` decimal(3, 1) NOT NULL COMMENT '学分',
+  `hours` tinyint(3) UNSIGNED NOT NULL COMMENT '学时',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '课程描述',
+  PRIMARY KEY (`course_id`) USING BTREE,
+  UNIQUE INDEX `uq_course_name`(`name` ASC) USING BTREE,
+  INDEX `idx_course_credit`(`credit` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for department
+-- ----------------------------
+DROP TABLE IF EXISTS `department`;
+CREATE TABLE `department`  (
+  `dept_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `dept_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '院系名称',
+  `dept_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '院系代码',
+  PRIMARY KEY (`dept_id`) USING BTREE,
+  UNIQUE INDEX `uq_dept_name`(`dept_name` ASC) USING BTREE,
+  UNIQUE INDEX `uq_dept_code`(`dept_code` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for exam
+-- ----------------------------
+DROP TABLE IF EXISTS `exam`;
+CREATE TABLE `exam`  (
+  `exam_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `teacher_id` int(10) UNSIGNED NOT NULL COMMENT '监考/评分教师',
+  `student_id` int(10) UNSIGNED NOT NULL COMMENT '参考学生',
+  `section_id` int(10) UNSIGNED NOT NULL COMMENT '所属开课节',
+  `exam_date` date NULL DEFAULT NULL COMMENT '考试日期',
+  `exam_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'final' COMMENT '考试类型：final=期末，midterm=期中，quiz=平时测验',
+  `score` decimal(5, 2) NULL DEFAULT NULL COMMENT '分数（百分制）',
+  PRIMARY KEY (`exam_id`) USING BTREE,
+  UNIQUE INDEX `uq_exam`(`teacher_id` ASC, `student_id` ASC, `section_id` ASC, `exam_date` ASC) USING BTREE,
+  INDEX `idx_exam_student`(`student_id` ASC) USING BTREE,
+  INDEX `idx_exam_section`(`section_id` ASC) USING BTREE,
+  INDEX `idx_exam_date`(`exam_date` ASC) USING BTREE,
+  INDEX `idx_exam_type`(`exam_type` ASC) USING BTREE,
+  CONSTRAINT `fk_exam_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_exam_student` FOREIGN KEY (`student_id`) REFERENCES `student` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_exam_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for section
+-- ----------------------------
+DROP TABLE IF EXISTS `section`;
+CREATE TABLE `section`  (
+  `section_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `semester` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '学期（Spring/Fall）',
+  `year` year NOT NULL COMMENT '学年',
+  `course_id` int(10) UNSIGNED NOT NULL COMMENT '所属课程',
+  `enrollment_start` datetime NULL DEFAULT NULL COMMENT '选课开始时间',
+  `enrollment_end` datetime NULL DEFAULT NULL COMMENT '选课结束时间',
+  `capacity` smallint(5) UNSIGNED NOT NULL DEFAULT 0 COMMENT '容量',
+  PRIMARY KEY (`section_id`) USING BTREE,
+  UNIQUE INDEX `uq_section`(`course_id` ASC, `semester` ASC, `year` ASC) USING BTREE,
+  INDEX `idx_section_course`(`course_id` ASC) USING BTREE,
+  INDEX `idx_section_year_sem`(`year` ASC, `semester` ASC) USING BTREE,
+  CONSTRAINT `fk_section_course` FOREIGN KEY (`course_id`) REFERENCES `course` (`course_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for section_restriction
+-- ----------------------------
+DROP TABLE IF EXISTS `restriction`;
+CREATE TABLE `restriction`  (
+  `section_id` int(10) UNSIGNED NOT NULL COMMENT '开课节',
+  `dept_id` int(10) UNSIGNED NOT NULL COMMENT '允许选修的院系',
+  PRIMARY KEY (`section_id`, `dept_id`) USING BTREE,
+  INDEX `idx_restriction_dept`(`dept_id` ASC) USING BTREE,
+  CONSTRAINT `fk_restriction_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_restriction_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '开课节选课院系限制表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for section_schedule
+-- ----------------------------
+DROP TABLE IF EXISTS `schedule`;
+CREATE TABLE `schedule`  (
+  `schedule_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `section_id` int(10) UNSIGNED NOT NULL COMMENT '关联的开课节',
+  `day_of_week` tinyint(3) UNSIGNED NOT NULL COMMENT '星期几 (1=周一, 7=周日)',
+  `start_time` time NOT NULL COMMENT '上课开始时间',
+  `end_time` time NOT NULL COMMENT '上课结束时间',
+  `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '上课地点/教室',
+  `week_start` tinyint(2) UNSIGNED NULL DEFAULT 1 COMMENT 'First week of class (1-16)',
+  `week_end` tinyint(2) UNSIGNED NULL DEFAULT 13 COMMENT 'Last week of class (1-16)',
+  PRIMARY KEY (`schedule_id`) USING BTREE,
+  INDEX `idx_schedule_section`(`section_id` ASC) USING BTREE,
+  CONSTRAINT `fk_schedule_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '排课时间表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for student
+-- ----------------------------
+DROP TABLE IF EXISTS `student`;
+CREATE TABLE `student`  (
+  `user_id` int(10) UNSIGNED NOT NULL COMMENT '关联 user.user_id',
+  `student_no` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '' COMMENT '学号（唯一）',
+  `grade` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '年级称谓（Sophomore 等）',
+  `enrollment_year` year NULL DEFAULT NULL COMMENT '入学年份',
+  `dept_id` int(10) UNSIGNED NOT NULL COMMENT '所属院系',
+  PRIMARY KEY (`user_id`) USING BTREE,
+  UNIQUE INDEX `uq_student_no`(`student_no` ASC) USING BTREE,
+  INDEX `idx_student_dept`(`dept_id` ASC) USING BTREE,
+  CONSTRAINT `fk_student_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_student_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for takes
+-- ----------------------------
+DROP TABLE IF EXISTS `takes`;
+CREATE TABLE `takes`  (
+  `student_id` int(10) UNSIGNED NOT NULL,
+  `section_id` int(10) UNSIGNED NOT NULL,
+  `grade` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '成绩（A/B+/C 等字母制）',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'enrolled' COMMENT '选课状态：enrolled=已选，dropped=已退，pending=待审核',
+  `enrolled_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '选课时间',
+  PRIMARY KEY (`student_id`, `section_id`) USING BTREE,
+  INDEX `idx_takes_section`(`section_id` ASC) USING BTREE,
+  INDEX `idx_takes_status`(`status` ASC) USING BTREE,
+  INDEX `idx_takes_enrolled`(`enrolled_at` ASC) USING BTREE,
+  CONSTRAINT `fk_takes_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_takes_student` FOREIGN KEY (`student_id`) REFERENCES `student` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for teacher
+-- ----------------------------
+DROP TABLE IF EXISTS `teacher`;
+CREATE TABLE `teacher`  (
+  `user_id` int(10) UNSIGNED NOT NULL COMMENT '关联 user.user_id',
+  `title` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '职称',
+  `dept_id` int(10) UNSIGNED NOT NULL COMMENT '所属院系',
+  PRIMARY KEY (`user_id`) USING BTREE,
+  INDEX `idx_teacher_dept`(`dept_id` ASC) USING BTREE,
+  CONSTRAINT `fk_teacher_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_teacher_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for teaching
+-- ----------------------------
+DROP TABLE IF EXISTS `teaching`;
+CREATE TABLE `teaching`  (
+  `teacher_id` int(10) UNSIGNED NOT NULL,
+  `section_id` int(10) UNSIGNED NOT NULL,
+  PRIMARY KEY (`teacher_id`, `section_id`) USING BTREE,
+  INDEX `idx_teaching_section`(`section_id` ASC) USING BTREE,
+  CONSTRAINT `fk_teaching_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_teaching_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for user
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user`  (
+  `user_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '姓名',
+  `email` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '邮箱',
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '密码',
+  `status` enum('active','inactive','banned') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active' COMMENT '账号状态',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  `gender` enum('male','female','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '性别',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '手机号',
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '头像文件名',
+  PRIMARY KEY (`user_id`) USING BTREE,
+  UNIQUE INDEX `uq_user_email`(`email` ASC) USING BTREE,
+  UNIQUE INDEX `uq_user_phone`(`phone` ASC) USING BTREE,
+  INDEX `idx_user_status`(`status` ASC) USING BTREE,
+  INDEX `idx_user_created_at`(`created_at` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+SET FOREIGN_KEY_CHECKS = 1;
