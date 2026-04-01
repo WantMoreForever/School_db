@@ -1,0 +1,269 @@
+﻿/* ============================================================
+   profile.css 锟斤拷 锟斤拷锟斤拷锟斤拷息页专锟斤拷锟斤拷式
+   锟斤拷锟斤拷 index.css 锟叫碉拷 CSS 锟斤拷锟斤拷锟酵伙拷锟斤拷锟斤拷锟?
+   ============================================================ */
+
+/* 锟斤拷锟斤拷 锟斤拷锟斤拷锟斤拷息页锟斤拷锟斤拷锟斤拷头锟斤拷 + 锟斤拷锟斤拷锟斤拷息锟斤拷锟斤拷 锟斤拷锟斤拷 */
+.profile-top {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+/* 头锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷远锟轿伙拷锟斤拷锟斤拷诟锟斤拷遣悖?*/
+.profile-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.profile-avatar-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--border);
+    display: block;
+}
+.profile-avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--accent-ink);
+    color: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 700;
+    border: 3px solid var(--border);
+    user-select: none;
+}
+/* 锟斤拷停锟斤拷锟角诧拷 */
+.avatar-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.profile-avatar-wrap:hover .avatar-overlay { opacity: 1; }
+
+/* 锟斤拷锟斤拷锟揭诧拷锟斤拷锟斤拷锟斤拷息 */
+.profile-top-info { flex: 1; }
+.pt-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+.pt-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+}
+.pt-dept {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-bottom: 10px;
+}
+.pt-status {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+.pt-status.inactive {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* 锟斤拷锟斤拷 头锟斤拷锟较达拷锟斤拷锟斤拷锟斤拷默锟斤拷锟斤拷锟截ｏ拷 锟斤拷锟斤拷 */
+.avatar-form {
+    display: none;
+    background: var(--surface);
+    border: 1px dashed var(--accent-ink);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.3s ease both;
+}
+.avatar-form.visible { display: block; }
+.avatar-form-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.avatar-file-label {
+    flex: 1;
+    min-width: 200px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    cursor: pointer;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    transition: border-color 0.2s;
+}
+.avatar-file-label:hover { border-color: var(--accent-ink); color: var(--ink); }
+
+.avatar-preview-row {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.avatar-preview-row img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+#avatarFileName {
+    font-size: 13px;
+    color: var(--ink-muted);
+}
+
+/* 锟斤拷锟斤拷 锟斤拷息锟斤拷锟斤拷 锟斤拷锟斤拷 */
+.profile-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.ps-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+.ps-hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink-muted);
+}
+
+/* 只锟斤拷锟街讹拷锟斤拷锟斤拷 */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+.ig-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.ig-k {
+    width: 90px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    flex-shrink: 0;
+}
+.ig-v {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+}
+.ig-v.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+/* 状态锟斤拷锟斤拷 */
+.status-pill {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.status-pill.active  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+.status-pill.inactive { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+/* 锟缴编辑锟斤拷锟斤拷 */
+.edit-form { display: flex; flex-direction: column; gap: 18px; }
+.edit-form .form-row { display: flex; flex-direction: column; gap: 6px; }
+.edit-form .form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-muted);
+}
+.edit-form .form-input {
+    max-width: 440px;
+}
+.edit-form .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+/* 锟斤拷锟斤拷锟斤拷钮锟斤拷锟斤拷 index.css 锟斤拷锟叫的憋拷锟斤拷一锟铰ｏ拷锟斤拷锟节此诧拷锟戒） */
+/* 锟斤拷锟斤拷锟节匡拷片 */
+.quick-links { display: flex; flex-direction: column; gap: 12px; }
+.quick-link-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    cursor: pointer;
+}
+.quick-link-card:hover {
+    border-color: var(--accent-ink);
+    background: var(--surface);
+    transform: translateY(-2px);
+}
+.ql-icon { font-size: 24px; flex-shrink: 0; }
+.ql-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+.ql-desc  { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+.ql-arrow { margin-left: auto; font-size: 18px; color: var(--ink-muted); }
+.input-ok {
+    border-color: #22c55e !important;
+}
+
+.input-error {
+    border-color: #ef4444 !important;
+}
+.avatar-edit-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--ink-muted);
+    transition: color 0.2s;
+}
+.avatar-edit-link:hover { color: var(--ink); }
+@media (max-width: 700px) {
+    .profile-top { flex-direction: column; text-align: center; }
+    .info-grid { grid-template-columns: 1fr; }
+}

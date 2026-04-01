@@ -1,0 +1,74 @@
+/* 全局通用样式 —— 整个网站共用 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    line-height: 1.6;
+    margin-top: 80px;
+}
+
+/* 登录框通用样式 */
+.login-box {
+    width: 380px;
+    background: white;
+    margin: 0 auto;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.login-box h2 {
+    margin-bottom: 25px;
+    color: #2d67ea;
+}
+
+/* 输入框样式 */
+input {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2d67ea;
+}
+
+/* 按钮样式 */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #2d67ea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1a54d1;
+}
+
+/* 提示文字 */
+.tips {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
+
+a {
+    color: #2d67ea;
+    text-decoration: none;
+}
