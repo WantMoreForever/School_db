@@ -1,0 +1,638 @@
+/* schedule.css - schedule.php 专属样式，依赖 base.css */
+
+/* ===== 学期横幅 ===== */
+.semester-banner {
+    display: flex;
+    align-items: stretch;
+    background: var(--ink);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.semester-banner::after {
+    content: '课';
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 110px;
+    font-weight: 700;
+    color: rgba(255,255,255,.04);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.sb-item {
+    padding: 22px 32px;
+    flex: 1;
+    border-right: 1px solid rgba(255,255,255,.08);
+    position: relative;
+    z-index: 1;
+}
+
+.sb-item:last-child { border-right: none; }
+
+.sb-label {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.sb-val {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+/* ===== 工具栏 ===== */
+.schedule-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 22px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all .2s ease;
+    font-family: 'Noto Sans SC', sans-serif;
+    white-space: nowrap;
+}
+
+.toggle-btn.active {
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 1px 5px rgba(15,23,42,.10);
+}
+
+.toggle-btn:hover:not(.active) {
+    color: var(--ink);
+    background: rgba(255,255,255,.6);
+}
+
+/* 周导航 */
+.week-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.week-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.week-nav-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--ink-muted);
+    transition: all .2s;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.week-nav-btn:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.week-nav-btn:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+}
+
+.week-label-box {
+    min-width: 90px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+}
+
+/* 周数小方块 */
+.week-pills {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 420px;
+}
+
+.week-pill {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-muted);
+    transition: all .15s;
+    flex-shrink: 0;
+}
+
+.week-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 700;
+}
+
+.week-pill.all-pill {
+    width: auto;
+    padding: 0 8px;
+    font-size: 10px;
+    letter-spacing: .04em;
+}
+
+.week-pill:hover:not(.active) {
+    background: #eff6ff;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ===== 课程表主体 ===== */
+.schedule-wrap {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 使用 CSS Grid: 第一列时间轴 + 7 天 */
+.timetable {
+    display: grid;
+    grid-template-columns: 72px repeat(7, minmax(110px, 1fr));
+    min-width: 840px;
+}
+
+/* 头部 */
+.th-gutter {
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 14px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.th-gutter-inner {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-muted);
+    opacity: .45;
+    letter-spacing: .06em;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.th-day {
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 12px 8px;
+    text-align: center;
+    transition: background .2s;
+}
+
+.th-day:last-child { border-right: none; }
+
+.th-day.has-class { background: rgba(30,64,175,.04); }
+
+.day-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    font-family: 'Noto Serif SC', serif;
+}
+
+.day-en {
+    font-size: 10px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    opacity: .6;
+}
+
+/* 时间行 — 每行 60 分钟，高度 72px */
+.slot-time {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 6px;
+    height: 72px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.st-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    opacity: .75;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.slot-cell {
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    height: 72px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.slot-cell:last-child { border-right: none; }
+
+/* 最后一行不要 border-bottom */
+.last-row .slot-time,
+.last-row .slot-cell {
+    border-bottom: none;
+}
+
+/* 课程块 — 绝对定位，用 top/height 精确定位 */
+.course-block {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    border-radius: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: filter .15s, transform .15s, box-shadow .15s;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    box-sizing: border-box;
+}
+
+.course-block::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 8px 0 0 8px;
+    background: currentColor;
+    opacity: .35;
+}
+
+.course-block:hover {
+    filter: brightness(.93);
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,.14);
+    z-index: 20;
+}
+
+.cb-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin-bottom: 2px;
+}
+
+.cb-time {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: .7;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.cb-room {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: .65;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 全学期视图的起止周标签 — 显眼 */
+.cb-weeks-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 5px;
+    background: rgba(0,0,0,.12);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    white-space: nowrap;
+    width: fit-content;
+}
+
+/* 配色方案 */
+.cb-0 { background: #dbeafe; color: #1e3a8a; }
+.cb-1 { background: #d1fae5; color: #064e3b; }
+.cb-2 { background: #fef3c7; color: #78350f; }
+.cb-3 { background: #fce7f3; color: #831843; }
+.cb-4 { background: #ede9fe; color: #4c1d95; }
+.cb-5 { background: #ffedd5; color: #7c2d12; }
+.cb-6 { background: #cffafe; color: #164e63; }
+.cb-7 { background: #dcfce7; color: #14532d; }
+.cb-8 { background: #fef9c3; color: #713f12; }
+
+/* 课程块隐藏状态（不在该周开课时完全隐藏） */
+.course-block.hidden-week {
+    display: none !important;
+}
+
+/* 该天在指定周无课时显示的空状态提示 */
+.no-class-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    color: var(--ink-muted);
+    opacity: .35;
+    white-space: nowrap;
+    font-family: 'Noto Sans SC', sans-serif;
+    pointer-events: none;
+    display: none;
+}
+
+/* ===== 底部说明栏 ===== */
+.week-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    padding: 6px 2px;
+}
+
+.week-note .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+
+/* ===== 列表视图 ===== */
+.overview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ov-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .2s, transform .2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.ov-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateX(3px);
+}
+
+.ov-color-dot {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.ov-body { flex: 1; min-width: 0; }
+
+.ov-name {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ov-tags {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ov-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+}
+
+/* 周数 badge — 显眼 */
+.ov-weeks-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: rgba(30,64,175,.1);
+    color: #1e3a8a;
+    white-space: nowrap;
+}
+
+.ov-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.ov-schedule-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ov-sched-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.ov-day-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.ov-time-str {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+}
+
+.ov-location {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* ===== 空状态 ===== */
+.no-schedule {
+    padding: 80px 0;
+    text-align: center;
+}
+
+.ns-icon { font-size: 52px; margin-bottom: 14px; }
+
+.ns-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+}
+
+.ns-sub { font-size: 13px; color: var(--ink-muted); line-height: 1.6; }
+
+/* ===== 悬浮提示框 ===== */
+.course-tooltip {
+    position: fixed;
+    z-index: 9999;
+    background: var(--ink);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s;
+    max-width: 260px;
+    line-height: 1.5;
+    box-shadow: 0 8px 32px rgba(0,0,0,.28);
+}
+
+.course-tooltip.visible { opacity: 1; }
+
+.ct-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.ct-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    color: rgba(255,255,255,.75);
+    font-size: 11px;
+    margin-top: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 1100px) {
+    .semester-banner { flex-wrap: wrap; }
+    .sb-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .week-pills { max-width: 280px; }
+}
+
+@media (max-width: 900px) {
+    .week-pills { display: none; }
+    .schedule-toolbar { flex-direction: column; align-items: flex-start; }
+    .ov-right { display: none; }
+}

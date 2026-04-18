@@ -1,0 +1,227 @@
+/* ============================================================
+   选课页面 (course_select.php) 专属样式
+   依赖 base.css 的 CSS 变量与基础样式
+   ============================================================ */
+
+/* ===== 顶部概况卡片 ===== */
+.cs-overview-card {
+    background: linear-gradient(135deg, var(--ink), var(--ink-light));
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.cs-overview-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('data:image/svg+xml;utf8,<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1.5" fill="rgba(255,255,255,0.05)"/></svg>');
+    pointer-events: none;
+}
+
+.cs-ov-left { z-index: 1; }
+.cs-ov-right { z-index: 1; display: flex; gap: 32px; align-items: center; }
+
+.cs-ov-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+}
+
+.cs-ov-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.cs-stat { text-align: center; }
+.cs-val  { display: block; font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: #fff; }
+.cs-label { display: block; font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; letter-spacing: 0.05em; }
+.cs-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.15); }
+
+/* ===== 两栏布局 ===== */
+.bottom-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+@media (max-width: 1000px) {
+    .bottom-row { grid-template-columns: 1fr; }
+}
+
+/* ===== 卡片容器（本页专属，取代其他页的 grade-card） ===== */
+.cs-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+/* ===== 横向滚动容器 ===== */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== 表格样式 ===== */
+.cs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.cs-table thead tr {
+    background: #f8fafc;
+    border-bottom: 2px solid var(--border);
+}
+
+.cs-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.cs-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.cs-table tbody tr:last-child { border-bottom: none; }
+.cs-table tbody tr:hover { background: #f8fafc; }
+
+.cs-table td {
+    padding: 13px 16px;
+    color: var(--ink);
+    vertical-align: middle;
+}
+
+/* ===== 余量显示 ===== */
+.capacity-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+}
+.capacity-avail {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ===== 操作按钮（cs- 前缀，避免与 base.css 的 .btn-primary 冲突） ===== */
+.cs-btn-enroll {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(6, 95, 70, 0.2);
+    background: var(--jade-light);
+    color: var(--jade);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Noto Sans SC', sans-serif;
+    white-space: nowrap;
+}
+
+.cs-btn-enroll:hover {
+    background: var(--jade);
+    color: #fff;
+    border-color: var(--jade);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(6, 95, 70, 0.2);
+}
+
+.cs-btn-disabled {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    cursor: not-allowed;
+    font-family: 'Noto Sans SC', sans-serif;
+    white-space: nowrap;
+}
+
+.cs-btn-drop {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-muted);
+}
+.cs-btn-drop:hover { color: #ef4444; background: #fee2e2; }
+
+/* ===== 状态徽标 ===== */
+.cs-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.badge-green { background: var(--jade-light); color: var(--jade); }
+.badge-red   { background: #fee2e2; color: #b91c1c; }
+.badge-gray  { background: #f1f5f9; color: var(--ink-muted); }
+
+/* ===== 我的选课夹列表 ===== */
+.my-course-list { display: flex; flex-direction: column; }
+
+.my-course-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+}
+.my-course-item:hover { background: #f8fafc; }
+.my-course-item:last-child { border-bottom: none; }
+
+.mci-info { flex: 1; min-width: 0; }
+
+.mci-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mci-meta {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+}
+
+.mci-action { flex-shrink: 0; margin-left: 12px; }
