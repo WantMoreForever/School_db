@@ -152,12 +152,16 @@ CREATE TABLE `student`  (
   `grade` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '年级称谓（Sophomore 等）',
   `enrollment_year` year NULL DEFAULT NULL COMMENT '入学年份',
   `dept_id` int(10) UNSIGNED NOT NULL COMMENT '所属院系',
+  `major_id` int(10) UNSIGNED NULL DEFAULT NULL COMMENT '所属专业',
   PRIMARY KEY (`user_id`) USING BTREE,
   UNIQUE INDEX `uq_student_no`(`student_no` ASC) USING BTREE,
   INDEX `idx_student_dept`(`dept_id` ASC) USING BTREE,
+  INDEX `idx_student_major`(`major_id` ASC) USING BTREE,
   CONSTRAINT `fk_student_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_student_major` FOREIGN KEY (`major_id`) REFERENCES `major` (`major_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_student_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
 
 -- ----------------------------
 -- Table structure for takes
