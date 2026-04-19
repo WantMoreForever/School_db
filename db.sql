@@ -117,12 +117,13 @@ CREATE TABLE `section`  (
 DROP TABLE IF EXISTS `restriction`;
 CREATE TABLE `restriction`  (
   `section_id` int(10) UNSIGNED NOT NULL COMMENT '开课节',
-  `dept_id` int(10) UNSIGNED NOT NULL COMMENT '允许选修的院系',
-  PRIMARY KEY (`section_id`, `dept_id`) USING BTREE,
-  INDEX `idx_restriction_dept`(`dept_id` ASC) USING BTREE,
-  CONSTRAINT `fk_restriction_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  `major_id` int(10) UNSIGNED NOT NULL COMMENT '允许选修的专业',
+  PRIMARY KEY (`section_id`, `major_id`) USING BTREE,
+  INDEX `idx_restriction_major`(`major_id` ASC) USING BTREE,
+  CONSTRAINT `fk_restriction_major` FOREIGN KEY (`major_id`) REFERENCES `major` (`major_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_restriction_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '开课节选课院系限制表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '开课节选课专业限制表' ROW_FORMAT = DYNAMIC;
+
 
 -- ----------------------------
 -- Table structure for section_schedule
