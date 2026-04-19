@@ -135,11 +135,13 @@ CREATE TABLE `schedule`  (
   `day_of_week` tinyint(3) UNSIGNED NOT NULL COMMENT '星期几 (1=周一, 7=周日)',
   `start_time` time NOT NULL COMMENT '上课开始时间',
   `end_time` time NOT NULL COMMENT '上课结束时间',
-  `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '上课地点/教室',
+  `classroom_id` int(10) UNSIGNED NOT NULL COMMENT '关联教室',
   `week_start` tinyint(2) UNSIGNED NULL DEFAULT 1 COMMENT 'First week of class (1-16)',
   `week_end` tinyint(2) UNSIGNED NULL DEFAULT 13 COMMENT 'Last week of class (1-16)',
   PRIMARY KEY (`schedule_id`) USING BTREE,
   INDEX `idx_schedule_section`(`section_id` ASC) USING BTREE,
+  INDEX `idx_schedule_classroom`(`classroom_id` ASC) USING BTREE,
+  CONSTRAINT `fk_schedule_classroom` FOREIGN KEY (`classroom_id`) REFERENCES `classroom` (`classroom_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_schedule_section` FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '排课时间表' ROW_FORMAT = DYNAMIC;
 
