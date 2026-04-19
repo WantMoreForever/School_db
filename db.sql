@@ -247,4 +247,72 @@ CREATE TABLE `config`  (
 --INSERT INTO `config` VALUES ('term.fall_start_date', '\"2026-09-07\"', NULL, '2026-04-18 21:12:00');
 --INSERT INTO `config` VALUES ('term.spring_start_date', '\"2026-03-02\"', NULL, '2026-04-18 21:12:00');
 
+-- ----------------------------
+-- Table structure for major
+-- ----------------------------
+DROP TABLE IF EXISTS `major`;
+CREATE TABLE `major`  (
+  `major_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `major_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '专业名称',
+  `major_code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '专业代码',
+  `dept_id` int(10) UNSIGNED NOT NULL COMMENT '所属院系',
+  PRIMARY KEY (`major_id`) USING BTREE,
+  UNIQUE INDEX `uq_major_name`(`major_name` ASC) USING BTREE,
+  UNIQUE INDEX `uq_major_code`(`major_code` ASC) USING BTREE,
+  INDEX `idx_major_dept`(`dept_id` ASC) USING BTREE,
+  CONSTRAINT `fk_major_dept` FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for classroom
+-- ----------------------------
+DROP TABLE IF EXISTS `classroom`;
+CREATE TABLE `classroom`  (
+  `classroom_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `building` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '教学楼',
+  `room_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '房间号',
+  `capacity` int(10) UNSIGNED NOT NULL DEFAULT 50 COMMENT '容量',
+  `type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal' COMMENT '教室类型：normal=普通, multimedia=多媒体, lab=机房',
+  PRIMARY KEY (`classroom_id`) USING BTREE,
+  UNIQUE INDEX `uq_classroom_room`(`building` ASC, `room_number` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Table structure for time_slot
+-- ----------------------------
+DROP TABLE IF EXISTS `time_slot`;
+CREATE TABLE `time_slot`  (
+  `slot_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `slot_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '节次名称',
+  `start_time` time NOT NULL COMMENT '开始时间',
+  `end_time` time NOT NULL COMMENT '结束时间',
+  PRIMARY KEY (`slot_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of time_slot
+-- ----------------------------
+INSERT INTO `time_slot` VALUES (1, '1-2节', '08:00:00', '09:40:00');
+INSERT INTO `time_slot` VALUES (2, '3-4节', '10:00:00', '11:40:00');
+INSERT INTO `time_slot` VALUES (3, '5-6节', '13:30:00', '15:10:00');
+INSERT INTO `time_slot` VALUES (4, '7-8节', '15:30:00', '17:10:00');
+INSERT INTO `time_slot` VALUES (5, '9-10节', '18:20:00', '19:50:00');
+INSERT INTO `time_slot` VALUES (6, '11-12节', '20:00:00', '21:30:00');
+
+-- ----------------------------
+-- Table structure for system_log
+-- ----------------------------
+DROP TABLE IF EXISTS `system_log`;
+CREATE TABLE `system_log`  (
+  `log_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) UNSIGNED NULL DEFAULT NULL COMMENT '操作人ID',
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '操作动作',
+  `target_table` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '受影响表',
+  `target_id` int(10) UNSIGNED NULL DEFAULT NULL COMMENT '受影响记录ID',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`log_id`) USING BTREE,
+  INDEX `idx_log_user`(`user_id` ASC) USING BTREE,
+  CONSTRAINT `fk_log_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;
