@@ -322,4 +322,27 @@ CREATE TABLE `system_log`  (
   CONSTRAINT `fk_log_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
+
+CREATE TABLE IF NOT EXISTS `section_announcement` (
+  `announcement_id` int(10) UNSIGNED     NOT NULL AUTO_INCREMENT,
+  `section_id`      int(10) UNSIGNED     NOT NULL,
+  `teacher_id`      int(10) UNSIGNED     NOT NULL,
+  `title`           varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `content`         text         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `is_pinned`       tinyint(1)   NOT NULL DEFAULT 0  COMMENT '1=置顶',
+  `created_at`      datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`announcement_id`) USING BTREE,
+  INDEX `idx_ann_section` (`section_id` ASC),
+  INDEX `idx_ann_teacher` (`teacher_id` ASC),
+  INDEX `idx_ann_pinned`  (`is_pinned` DESC, `created_at` DESC),
+  CONSTRAINT `fk_ann_section`
+    FOREIGN KEY (`section_id`) REFERENCES `section` (`section_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ann_teacher`
+    FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='课程公告' ROW_FORMAT=DYNAMIC;
+
 SET FOREIGN_KEY_CHECKS = 1;
