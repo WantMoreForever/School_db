@@ -344,5 +344,26 @@ CREATE TABLE IF NOT EXISTS `section_announcement` (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB CHARACTER SET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='课程公告' ROW_FORMAT=DYNAMIC;
+DROP TABLE IF EXISTS `attendance`;
+CREATE TABLE `attendance`  (
+  `attendance_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `schedule_id` int(10) UNSIGNED NOT NULL COMMENT '关联 schedule.schedule_id（具体排课时间）',
+  `student_id` int(10) UNSIGNED NOT NULL,
+  `week` tinyint(2) UNSIGNED NOT NULL COMMENT '第几周 (1-16)',
+  `status` enum('present','absent','late','excused') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'present',
+  `note` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `recorded_by` int(10) UNSIGNED NOT NULL COMMENT '记录人 teacher_id',
+  `recorded_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`attendance_id`) USING BTREE,
+  UNIQUE INDEX `uq_attendance`(`schedule_id` ASC, `student_id` ASC, `week` ASC) USING BTREE,
+  INDEX `idx_att_student`(`student_id` ASC) USING BTREE,
+  INDEX `idx_att_schedule`(`schedule_id` ASC) USING BTREE,
+  INDEX `idx_att_week`(`week` ASC) USING BTREE,
+  INDEX `idx_att_status`(`status` ASC) USING BTREE,
+  INDEX `fk_att_recorder`(`recorded_by` ASC) USING BTREE,
+  CONSTRAINT `fk_att_recorder` FOREIGN KEY (`recorded_by`) REFERENCES `teacher` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_att_schedule` FOREIGN KEY (`schedule_id`) REFERENCES `schedule` (`schedule_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_att_student` FOREIGN KEY (`student_id`) REFERENCES `student` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '考勤记录' ROW_FORMAT = DYNAMIC;
 
 SET FOREIGN_KEY_CHECKS = 1;
