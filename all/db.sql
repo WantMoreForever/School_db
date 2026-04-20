@@ -222,7 +222,29 @@ CREATE TABLE `user`  (
   UNIQUE INDEX `uq_user_email`(`email` ASC) USING BTREE,
   UNIQUE INDEX `uq_user_phone`(`phone` ASC) USING BTREE,
   INDEX `idx_user_status`(`status` ASC) USING BTREE,
-  INDEX `idx_user_created_at`(`created_at` ASC) USING BTREE
+  INDEX `idx_user_created_at`(`created_at` ASC) USING BTREE,
+  CONSTRAINT `uq_email` UNIQUE(email)
 ) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
+
+
+
+DROP TABLE IF EXISTS `config`;
+CREATE TABLE `config`  (
+  `config_key` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '配置键（建议使用点号层级，如 schedule.total_weeks）',
+  `config_value` json NOT NULL COMMENT '配置值（JSON）',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '配置说明',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`config_key`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '系统配置表（键值）' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of config
+-- ----------------------------
+--INSERT INTO `config` VALUES ('office_phone', '\"12345678\"', '学生页展示的办公电话', '2026-04-18 20:09:36');
+--INSERT INTO `config` VALUES ('schedule.grid_end_h', '22', '课表结束小时', '2026-04-18 20:09:36');
+--INSERT INTO `config` VALUES ('schedule.grid_start_h', '8', '课表开始小时', '2026-04-18 20:09:36');
+--INSERT INTO `config` VALUES ('schedule.total_weeks', '17', '学期总周数', '2026-04-18 20:43:04');
+--INSERT INTO `config` VALUES ('term.fall_start_date', '\"2026-09-07\"', NULL, '2026-04-18 21:12:00');
+--INSERT INTO `config` VALUES ('term.spring_start_date', '\"2026-03-02\"', NULL, '2026-04-18 21:12:00');
 
 SET FOREIGN_KEY_CHECKS = 1;

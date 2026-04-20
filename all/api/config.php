@@ -12,7 +12,7 @@ define('DB_CHARSET', 'utf8mb4');
 
 // Avatar upload settings
 define('AVATAR_DIR',     __DIR__ . '/../uploads/avatars/');
-define('AVATAR_URL',     '../uploads/avatars/');
+define('AVATAR_URL',     'uploads/avatars/');
 define('AVATAR_MAX_SIZE', 2 * 1024 * 1024); // 2 MB
 define('AVATAR_ALLOWED', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 

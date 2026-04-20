@@ -364,4 +364,39 @@ BEGIN
     WHERE tg.teacher_id = p_teacher_id;
 END$$
 
+-- ============================================================
+-- PROCEDURE: sp_change_password
+-- Changes a user's password (plain-text, consistent with login_check.php)
+-- ============================================================
+DROP PROCEDURE IF EXISTS sp_change_password$$
+CREATE PROCEDURE sp_change_password(
+    IN  p_user_id      INT UNSIGNED,
+    IN  p_old_password VARCHAR(255),
+    IN  p_new_password VARCHAR(255),
+    OUT p_success      TINYINT,
+    OUT p_message      VARCHAR(200)
+)
+BEGIN
+    DECLARE v_match INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_match
+    FROM user
+    WHERE user_id = p_user_id AND password = p_old_password;
+
+    IF v_match = 0 THEN
+        SET p_success = 0;
+        SET p_message = '当前密码不正确';
+    ELSEIF p_new_password = p_old_password THEN
+        SET p_success = 0;
+        SET p_message = '新密码不能与当前密码相同';
+    ELSEIF CHAR_LENGTH(p_new_password) < 6 THEN
+        SET p_success = 0;
+        SET p_message = '新密码至少需要 6 位';
+    ELSE
+        UPDATE user SET password = p_new_password WHERE user_id = p_user_id;
+        SET p_success = 1;
+        SET p_message = '密码已更新';
+    END IF;
+END$$
+
 DELIMITER ;

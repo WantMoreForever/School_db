@@ -37,6 +37,13 @@ try {
         'update_letter_grade'   => action_update_letter_grade($pdo, $TEACHER_ID),
         'auto_assign_grades'    => action_auto_assign_grades($pdo, $TEACHER_ID),
         'get_dashboard'         => action_get_dashboard($pdo, $TEACHER_ID),
+        'batch_import_exam'     => action_batch_import_exam($pdo, $TEACHER_ID),
+        'publish_exam'          => action_publish_exam($pdo, $TEACHER_ID),
+        'get_exam_events'       => action_get_exam_events($pdo, $TEACHER_ID),
+        'get_pending_exams'     => action_get_pending_exams($pdo, $TEACHER_ID),
+        'get_entry_students'    => action_get_entry_students($pdo, $TEACHER_ID),
+        'cancel_exam_event'     => action_cancel_exam_event($pdo, $TEACHER_ID),
+        'change_password'       => action_change_password($pdo, $TEACHER_ID),
         default                 => json_err("Unknown action: $action"),
     };
 } catch (PDOException $e) {
@@ -104,10 +111,10 @@ function action_upload_avatar(PDO $pdo, int $tid): void {
         json_err('File too large (max 2 MB)');
     }
 
-    // Detect real MIME type
-    $finfo    = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $file['tmp_name']);
-    finfo_close($finfo);
+    // Detect real MIME type via getimagesize (no fileinfo extension needed)
+    $imgInfo = @getimagesize($file['tmp_name']);
+    if (!$imgInfo) json_err('Unsupported or invalid image file');
+    $mimeType = $imgInfo['mime'];
 
     if (!in_array($mimeType, AVATAR_ALLOWED)) {
         json_err('Unsupported image type: ' . $mimeType);
@@ -138,6 +145,7 @@ function action_upload_avatar(PDO $pdo, int $tid): void {
 
     $stmt = $pdo->prepare('CALL sp_update_teacher_avatar(?, ?)');
     $stmt->execute([$tid, $filename]);
+    do { $stmt->fetchAll(); } while ($stmt->nextRowset());
 
     json_ok([
         'filename'   => $filename,
@@ -223,6 +231,7 @@ function action_save_exam(PDO $pdo, int $tid): void {
     $enroll->execute([$student_id, $section_id]);
     if (!$enroll->fetchColumn()) json_err('Student not enrolled in this section');
 
+    $pdo->exec("SET @current_user_id = {$tid}");
     $stmt = $pdo->prepare('CALL sp_save_exam(?, ?, ?, ?, ?, ?, @exam_id)');
     $stmt->execute([$tid, $student_id, $section_id, $exam_type, $score, $exam_date]);
 
@@ -243,6 +252,7 @@ function action_update_exam(PDO $pdo, int $tid): void {
     if (!$exam_id) json_err('exam_id required');
     if ($score === null || $score < 0 || $score > 100) json_err('Score must be 0–100');
 
+    $pdo->exec("SET @current_user_id = {$tid}");
     $stmt = $pdo->prepare('CALL sp_update_exam_score(?, ?, ?)');
     $stmt->execute([$exam_id, $score, $tid]);
     $result = $stmt->fetch();
@@ -259,6 +269,7 @@ function action_delete_exam(PDO $pdo, int $tid): void {
     $exam_id = (int)($body['exam_id'] ?? 0);
     if (!$exam_id) json_err('exam_id required');
 
+    $pdo->exec("SET @current_user_id = {$tid}");
     $stmt = $pdo->prepare('CALL sp_delete_exam(?, ?)');
     $stmt->execute([$exam_id, $tid]);
     $result = $stmt->fetch();
@@ -286,6 +297,7 @@ function action_update_letter_grade(PDO $pdo, int $tid): void {
     $check->execute([$tid, $section_id]);
     if (!$check->fetchColumn()) json_err('Access denied', 403);
 
+    $pdo->exec("SET @current_user_id = {$tid}");
     $stmt = $pdo->prepare('CALL sp_update_letter_grade(?, ?, ?)');
     $stmt->execute([$student_id, $section_id, $grade ?: null]);
     $result = $stmt->fetch();
@@ -302,10 +314,157 @@ function action_auto_assign_grades(PDO $pdo, int $tid): void {
     $section_id = (int)($body['section_id'] ?? 0);
     if (!$section_id) json_err('section_id required');
 
+    $pdo->exec("SET @current_user_id = {$tid}");
     $stmt = $pdo->prepare('CALL sp_auto_assign_grades(?, ?)');
     $stmt->execute([$section_id, $tid]);
     $result = $stmt->fetch();
     json_ok(['updated' => (int)($result['updated_count'] ?? 0)]);
+}
+
+/**
+ * POST /api/teacher.php?action=batch_import_exam
+ * Body: { section_id, exam_type, exam_date, records:[{student_no,score},...] }
+ * Calls: sp_batch_import_exam(...)
+ */
+function action_batch_import_exam(PDO $pdo, int $tid): void {
+    $b          = json_decode(file_get_contents('php://input'), true) ?? [];
+    $section_id = (int)($b['section_id'] ?? 0);
+    $exam_type  = $b['exam_type'] ?? '';
+    $exam_date  = $b['exam_date'] ?? date('Y-m-d');
+    $records    = $b['records']   ?? [];
+
+    if (!$section_id)                                       json_err('section_id required');
+    if (!in_array($exam_type, ['final','midterm','quiz']))  json_err('Invalid exam_type');
+    if (!is_array($records) || !count($records))            json_err('records array required');
+
+    // Validate each record client-side first
+    foreach ($records as &$rec) {
+        $rec['score']      = isset($rec['score'])      ? (float)$rec['score']      : null;
+        $rec['student_id'] = isset($rec['student_id']) ? (int)$rec['student_id']   : null;
+        $rec['student_no'] = isset($rec['student_no']) ? trim($rec['student_no'])  : null;
+        if ($rec['score'] === null || $rec['score'] < 0 || $rec['score'] > 100) {
+            json_err('Each record must have a valid score (0–100)');
+        }
+        if (!$rec['student_id'] && !$rec['student_no']) {
+            json_err('Each record must have student_id or student_no');
+        }
+    }
+    unset($rec);
+
+    $json = json_encode(array_values($records));
+    $pdo->exec("SET @current_user_id = {$tid}");
+
+    $stmt = $pdo->prepare('CALL sp_batch_import_exam(?,?,?,?,?,@saved,@skipped,@ok,@msg)');
+    $stmt->execute([$tid, $section_id, $exam_type, $exam_date, $json]);
+    do { $stmt->fetchAll(); } while ($stmt->nextRowset());
+
+    $r = $pdo->query('SELECT @saved AS saved, @skipped AS skipped, @ok AS ok, @msg AS msg')->fetch();
+    if (!(int)$r['ok']) json_err($r['msg']);
+    json_ok(['saved' => (int)$r['saved'], 'skipped' => (int)$r['skipped'], 'message' => $r['msg']]);
+}
+
+/**
+ * POST /api/teacher.php?action=publish_exam
+ * Body: { section_id, exam_type, exam_date }
+ */
+function action_publish_exam(PDO $pdo, int $tid): void {
+    $b          = json_decode(file_get_contents('php://input'), true) ?? [];
+    $section_id = (int)($b['section_id'] ?? 0);
+    $exam_type  = $b['exam_type'] ?? '';
+    $exam_date  = $b['exam_date'] ?? '';
+
+    if (!$section_id) json_err('section_id required');
+    if (!in_array($exam_type, ['final','midterm','quiz'])) json_err('Invalid exam_type');
+    if (!$exam_date) json_err('exam_date required');
+
+    $stmt = $pdo->prepare('CALL sp_publish_exam(?,?,?,?,@inserted,@ok,@msg)');
+    $stmt->execute([$tid, $section_id, $exam_type, $exam_date]);
+    do { $stmt->fetchAll(); } while ($stmt->nextRowset());
+
+    $r = $pdo->query('SELECT @inserted AS inserted, @ok AS ok, @msg AS msg')->fetch();
+    if (!(int)$r['ok']) json_err($r['msg']);
+    json_ok(['inserted' => (int)$r['inserted'], 'message' => $r['msg']]);
+}
+
+/**
+ * GET /api/teacher.php?action=get_exam_events&section_id=X
+ */
+function action_get_exam_events(PDO $pdo, int $tid): void {
+    $sid = (int)($_GET['section_id'] ?? 0);
+    if (!$sid) json_err('section_id required');
+
+    $stmt = $pdo->prepare('CALL sp_get_exam_events(?, ?)');
+    $stmt->execute([$tid, $sid]);
+    json_ok($stmt->fetchAll());
+}
+
+/**
+ * GET /api/teacher.php?action=get_pending_exams
+ */
+function action_get_pending_exams(PDO $pdo, int $tid): void {
+    $stmt = $pdo->prepare('CALL sp_get_pending_exams(?)');
+    $stmt->execute([$tid]);
+    json_ok($stmt->fetchAll());
+}
+
+/**
+ * GET /api/teacher.php?action=get_entry_students&section_id=X&exam_type=Y&exam_date=Z
+ */
+function action_get_entry_students(PDO $pdo, int $tid): void {
+    $section_id = (int)($_GET['section_id'] ?? 0);
+    $exam_type  = $_GET['exam_type'] ?? '';
+    $exam_date  = $_GET['exam_date'] ?? '';
+    if (!$section_id || !$exam_type || !$exam_date) json_err('section_id, exam_type, exam_date required');
+
+    $stmt = $pdo->prepare('CALL sp_get_exam_entry_students(?, ?, ?, ?)');
+    $stmt->execute([$section_id, $tid, $exam_type, $exam_date]);
+    $rows = $stmt->fetchAll();
+    foreach ($rows as &$r) {
+        $r['avatar_url'] = $r['image'] ? AVATAR_URL . $r['image'] : null;
+    }
+    json_ok($rows);
+}
+
+/**
+ * POST /api/teacher.php?action=cancel_exam_event
+ * Body: { section_id, exam_type, exam_date }
+ */
+function action_cancel_exam_event(PDO $pdo, int $tid): void {
+    $b          = json_decode(file_get_contents('php://input'), true) ?? [];
+    $section_id = (int)($b['section_id'] ?? 0);
+    $exam_type  = $b['exam_type'] ?? '';
+    $exam_date  = $b['exam_date'] ?? '';
+    if (!$section_id || !$exam_type || !$exam_date) json_err('section_id, exam_type, exam_date required');
+
+    $stmt = $pdo->prepare('CALL sp_cancel_exam_event(?,?,?,?,@ok,@msg)');
+    $stmt->execute([$section_id, $tid, $exam_type, $exam_date]);
+    do { $stmt->fetchAll(); } while ($stmt->nextRowset());
+
+    $r = $pdo->query('SELECT @ok AS ok, @msg AS msg')->fetch();
+    if (!(int)$r['ok']) json_err($r['msg']);
+    json_ok(['message' => $r['msg']]);
+}
+
+/**
+ * POST /api/teacher.php?action=change_password
+ * Body: { old_password, new_password }
+ * Calls: sp_change_password(user_id, old, new, OUT ok, OUT msg)
+ */
+function action_change_password(PDO $pdo, int $tid): void {
+    $b        = json_decode(file_get_contents('php://input'), true) ?? [];
+    $old_pwd  = $b['old_password'] ?? '';
+    $new_pwd  = $b['new_password'] ?? '';
+
+    if (!$old_pwd) json_err('请输入当前密码');
+    if (strlen($new_pwd) < 6) json_err('新密码至少需要 6 位');
+
+    $stmt = $pdo->prepare('CALL sp_change_password(?,?,?,@ok,@msg)');
+    $stmt->execute([$tid, $old_pwd, $new_pwd]);
+    do { $stmt->fetchAll(); } while ($stmt->nextRowset());
+
+    $r = $pdo->query('SELECT @ok AS ok, @msg AS msg')->fetch();
+    if (!(int)$r['ok']) json_err($r['msg']);
+    json_ok(['message' => $r['msg']]);
 }
 
 /**
