@@ -2,7 +2,7 @@
 
 ## 1. 文档说明
 
-本文档基于当前 `EduManage` 教学管理系统项目代码、`school_db_backup.sql`、`admin_reusable_db_objects.sql`、`project_reusable_db_objects.sql` 和 `fix_takes_status_routines.sql` 整理，用于课程项目交付、答辩说明和后续维护。
+本文档基于当前 `EduManage` 教学管理系统项目代码与 `school_db_backup.sql` 整理，用于课程项目交付、答辩说明和后续维护。
 
 当前项目功能已经基本定型，文档重点说明：
 
@@ -97,7 +97,7 @@
 
 当前仍未完全收口到 `config/` 的配置点：
 
-- 测试脚本中的演示邮箱、数据库名等固定值属于测试样本，不建议和业务配置混合。
+- 当前演示链路的固定账号与导入顺序由 `tests/sql/demo_seed.sql` 和 smoke 共同约定。
 - 后台示例数据中的演示邮箱仍属于页面示例内容，不属于运行时配置。
 
 ## 2.2 索引设计说明
@@ -144,7 +144,7 @@
 2. 对关键 SQL 执行 `EXPLAIN`，确认命中新联合索引。
 3. 在学生端、教师端、管理端完成页面回归。
 
-这样可以确认“文档、备份结构、运行中数据库实例”三者保持一致。
+这样可以确认“文档、权威结构、运行中数据库实例”三者保持一致。
 
 ## 3. 部署与运行
 
@@ -185,14 +185,16 @@
 
 ### 3.2 数据库导入顺序
 
-如果是新环境部署，建议按以下顺序执行：
+如果是新环境部署，建议按以下唯一顺序执行：
 
 1. 导入 `school_db_backup.sql`
-2. 如当前备份未包含管理员复用对象，再导入 `admin_reusable_db_objects.sql`
-3. 如当前备份未包含项目复用对象，再导入 `project_reusable_db_objects.sql`
-4. 如果遇到旧例程仍引用 `takes.status`，执行 `fix_takes_status_routines.sql`
+2. 导入 `tests/sql/demo_seed.sql`
 
-当前项目代码已经优先调用 `sp_project_*` 和 `sp_admin_*` 存储过程；如果某些对象没有导入，代码会尽量回退到原 SQL 查询，避免页面直接崩溃。
+其中：
+
+- `school_db_backup.sql` 是唯一权威结构与存储程序来源。
+- `tests/sql/demo_seed.sql` 是唯一演示数据来源。
+- `tests/sql/qa_business_validation_seed.sql` 仅用于 QA / 业务验证，不参与答辩演示链路。
 
 ### 3.3 运行入口
 
@@ -217,10 +219,10 @@
 | `config/` | 数据库配置、路径配置、前端路径配置。 |
 | `uploads/` | 头像、登录图等上传资源。 |
 | `tests/smoke/` | 项目 smoke 测试脚本。 |
-| `school_db_backup.sql` | 当前数据库完整备份。 |
-| `admin_reusable_db_objects.sql` | 管理端复用视图、过程和触发器。 |
-| `project_reusable_db_objects.sql` | 全项目复用视图、过程和触发器。 |
-| `fix_takes_status_routines.sql` | 修复旧过程引用 `takes.status` 的兼容 SQL。 |
+| `school_db_backup.sql` | 当前数据库权威结构与存储程序备份。 |
+| `tests/sql/demo_seed.sql` | 唯一演示 seed，导入后即可登录答辩演示。 |
+| `tests/sql/qa_business_validation_seed.sql` | QA / 业务验证测试数据，不属于演示链路。 |
+| `teacher/procedure/*.sql` | 教师端过程的开发拆分来源，不属于部署/演示导入链路。 |
 
 ## 5. 登录与权限
 
@@ -646,7 +648,7 @@
 
 - 数据库逻辑更集中，便于答辩说明。
 - 页面查询逻辑更统一。
-- 如果某个补充 SQL 文件未导入，页面仍有机会回退到原查询，降低课程项目运行风险。
+- `teacher/procedure/*.sql` 当前保留为开发拆分来源，正式部署、答辩演示和 smoke 不依赖这些拆分 SQL 单独导入。
 
 ## 15. 测试说明
 
