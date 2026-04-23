@@ -2,7 +2,7 @@
 
 ## 1. 文档范围
 
-本文档以当前 [school_db_backup.sql](/d:/phpstudy_pro/WWW/EduManage/school_db_backup.sql:1) 为准，作为 `EduManage` 教学管理系统数据库结构的权威说明，用于：
+本文档以当前 [school_db_backup.sql](/d:/phpstudy_pro/WWW/EduManage/school_db_backup.sql:1) 为准，作为 `EduManage` 教学管理系统数据库结构的权威说明；演示数据权威来源为 `tests/sql/demo_seed.sql`。本文档用于：
 
 - 开发时快速理解表结构、字段和关联关系；
 - 排查接口或页面问题时核对真实数据库约束；
