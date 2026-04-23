@@ -1,0 +1,10 @@
+[Thu Apr 23 15:11:16 2026] PHP 8.0.2 Development Server (http://127.0.0.1:8124) started
+[Thu Apr 23 15:11:16 2026] 127.0.0.1:60442 Accepted
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60442 [302]: POST /login/login.php
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60442 Closing
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60444 Accepted
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60444 [200]: POST /student/spa.html
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60444 Closing
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60445 Accepted
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60445 [200]: GET /student/api/announcement.php
+[Thu Apr 23 15:11:17 2026] 127.0.0.1:60445 Closing
