@@ -20,12 +20,12 @@
 D:\phpstudy_pro\WWW\EduManage
 ```
 
-项目可以部署在站点根目录，也可以部署在子目录。`config/paths.php` 会根据当前请求路径自动识别项目 Web Base，例如 `/EduManage/`。
+标准部署方式是“站点根目录指向项目目录”。`config/paths.php` 仍保留子目录自适应能力，但这属于兼容能力，不作为答辩和部署主链路说明。
 
 根路径访问规则：
 
 - Apache 使用 `.htaccess`，访问项目根路径会跳转到 `/login/`。
-- Nginx 可参考 `nginx.htaccess` 中的示例 location。
+- Nginx 可参考 `nginx.conf.example` 中的完整示例配置。
 
 ## 3. 数据库准备
 
@@ -41,13 +41,18 @@ CREATE DATABASE IF NOT EXISTS school_db
 
 ### 3.2 导入 SQL
 
-新环境优先导入：
+新环境按以下唯一顺序导入：
 
 ```text
 school_db_backup.sql
+tests/sql/demo_seed.sql
 ```
 
-当前仓库主要交付文件是 `school_db_backup.sql`。如果找不到补充 SQL 文件，通常说明这些对象已经合并进当前备份或当前代码带有 SQL 回退逻辑。
+其中：
+
+- `school_db_backup.sql` 是唯一权威结构与存储程序来源。
+- `tests/sql/demo_seed.sql` 是唯一演示数据来源。
+- `tests/sql/qa_business_validation_seed.sql` 仅用于 QA / 业务规则验证，不参与演示链路。
 
 ### 3.3 可选索引优化脚本
 
@@ -85,7 +90,7 @@ docs/index-design.md
 - `docs/index-design.md`
   当前索引设计、查询路径和后续新增索引的判断方法。
 - `docs/test-data-scenarios.md`
-  基于当前结构整理的测试数据覆盖场景。
+  基于 `tests/sql/qa_business_validation_seed.sql` 整理的业务验证场景。
 
 如果后续导入了新的 SQL 备份或对表结构做了调整，请优先同步这三份文档，而不是只修改 `PROJECT_FUNCTION_DATABASE_DOC.md` 中的摘要段落。
 
@@ -172,47 +177,28 @@ app_catalog_url('teacher', 'api', 'grades');
 - `config/paths.php`：涉及文件真实路径和 URL，改动前要确认对应文件存在。
 - `config/frontend.php` 中的 CDN：如果替换为不可访问地址，会直接导致页面脚本或样式加载失败。
 
-当前仍未完全纳入 `config/` 的硬编码配置主要有：
-
-- 测试脚本中的演示账号和示例邮箱
-- 个别后台页面中的演示数据文本
-
-这些项目前仍属于“业务规则”或“测试样本”，后续如果要继续收口，可以再单独提一轮配置化整理。
+当前演示链路已经统一到固定账号和固定导入顺序，部署说明、smoke 和答辩文档都应以该契约为准。
 
 ## 5. Web Server 配置
 
 ### 5.1 phpstudy / Apache
 
-1. 将站点目录指向项目所在目录或其上级目录。
+1. 将站点根目录直接指向项目目录 `D:\phpstudy_pro\WWW\EduManage`。
 2. 确认 Apache 已启用 rewrite。
 3. 确认 `.htaccess` 可生效。
 4. 浏览器访问项目地址，例如：
 
-```text
-http://localhost/EduManage/
-```
-
-如果项目直接作为站点根目录：
-
-```text
 http://localhost/
 ```
 
 ### 5.2 Nginx
 
-如果项目挂载在 `/EduManage/`，可参考 `nginx.htaccess`：
+标准 Nginx 示例请直接使用仓库根目录的 `nginx.conf.example`。其中已经包含：
 
-```nginx
-location = /EduManage {
-    return 302 /EduManage/login/;
-}
-
-location = /EduManage/ {
-    return 302 /EduManage/login/;
-}
-```
-
-PHP 请求需要交给 PHP-FPM 或 phpstudy 的 PHP FastCGI。生产式 Nginx 配置还需要补充 `location ~ \.php$`，课程演示环境通常由 phpstudy 自动生成。
+- `/` 跳转到 `/login/`
+- `/login` 规范化到 `/login/`
+- PHP 请求转发到 PHP-FPM
+- 常见静态资源与入口页访问规则
 
 ## 6. 目录权限
 
@@ -239,15 +225,13 @@ Windows/phpstudy 下一般无需额外设置；Linux/Nginx 环境需要确保 We
 
 ## 8. 初始账号
 
-当前 smoke 测试使用以下演示账号：
+唯一演示账号如下：
 
 | 角色 | 邮箱 | 密码 |
 | --- | --- | --- |
-| 超级管理员 | `admin@school.edu` | `1` |
-| 教师 | `limin@school.edu` | `1` |
-| 学生 | `liuyang@school.edu` | `123456` |
-
-如果导入的是不同版本数据，请以 `user` 表中的实际账号为准。
+| 超级管理员 | `admin@school.edu` | `123456` |
+| 教师 | `teacher@school.edu` | `123456` |
+| 学生 | `student@school.edu` | `123456` |
 
 部署数据库时必须确认至少存在一个超级管理员：
 
@@ -292,7 +276,7 @@ powershell -ExecutionPolicy Bypass -File tests\smoke\run_smoke.ps1
 如果已经有 Web 服务在运行，也可以指定地址：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tests\smoke\run_smoke.ps1 -BaseUrl http://localhost/EduManage
+powershell -ExecutionPolicy Bypass -File tests\smoke\run_smoke.ps1 -BaseUrl http://localhost
 ```
 
 ## 10. 常见问题
@@ -303,7 +287,7 @@ powershell -ExecutionPolicy Bypass -File tests\smoke\run_smoke.ps1 -BaseUrl http
 
 - MySQL 是否启动。
 - `config/database.php` 中数据库名、用户名、密码是否正确。
-- 数据库是否已导入 `school_db_backup.sql`。
+- 数据库是否已按顺序导入 `school_db_backup.sql` 与 `tests/sql/demo_seed.sql`。
 
 ### 登录后跳错角色
 
@@ -317,8 +301,8 @@ powershell -ExecutionPolicy Bypass -File tests\smoke\run_smoke.ps1 -BaseUrl http
 
 检查：
 
-- 项目是否被移动到了新的子目录。
-- `config/paths.php` 是否能从 URL 自动识别 Web Base。
+- 站点根目录是否正确指向项目目录。
+- `.htaccess` 或 `nginx.conf.example` 是否按站点根目录模式配置正确。
 - Apache rewrite 或 Nginx location 是否配置正确。
 
 ### Excel 导入不可用
