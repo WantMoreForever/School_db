@@ -127,15 +127,13 @@ system_log
 
 ## 5. 演示账号
 
-以下账号来自当前部署文档和 smoke 测试配置：
+演示统一使用以下账号：
 
 | 角色 | 邮箱 | 密码 |
 | --- | --- | --- |
-| 超级管理员 | `admin@school.edu` | `1` |
-| 教师 | `limin@school.edu` | `1` |
-| 学生 | `liuyang@school.edu` | `123456` |
-
-如果演示数据库被替换，请以 `user` 表中的实际账号为准。
+| 超级管理员 | `admin@school.edu` | `123456` |
+| 教师 | `teacher@school.edu` | `123456` |
+| 学生 | `student@school.edu` | `123456` |
 
 系统必须保留至少一个超级管理员账号，否则无法进入管理员账号维护页面，也无法在后台新增或管理其他管理员。超级管理员由 `user` 表和 `admin` 表共同确定。
 
@@ -201,7 +199,7 @@ system_log
 
 ## 8. 演示前检查清单
 
-- 数据库已导入 `school_db_backup.sql`。
+- 数据库已按顺序导入 `school_db_backup.sql` 和 `tests/sql/demo_seed.sql`。
 - `config/database.php` 或环境变量连接信息正确。
 - 登录页、管理员端、教师端、学生端均可访问。
 - `uploads/avatars/` 可写。
