@@ -39,8 +39,8 @@ return [
     // 数据库密码。
     // 用途：配合用户名完成连接认证。
     // 修改影响：密码错误会导致全站数据库连接失败。
-    // 注意：建议优先通过 DB_PASS 环境变量注入，避免把真实密码固化到仓库。
-    'password' => getenv('DB_PASS') !== false ? (string) getenv('DB_PASS') : 'yaoxicheng',
+    // 注意：提交仓库时默认留空，优先通过 DB_PASS 环境变量或本地配置注入真实密码。
+    'password' => getenv('DB_PASS') !== false ? (string) getenv('DB_PASS') : '',
 
     // 连接字符集。
     // 常见值：utf8mb4
