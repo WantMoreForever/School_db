@@ -290,66 +290,37 @@ function queryPath(string $path, array $params = []): string
     return $path . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 }
 
-function teacherSeedSectionIds(): array
+function requirePositiveId(int $value, string $message): int
 {
-    return [2, 3, 9];
+    if ($value <= 0) {
+        throw new SmokeFailure($message);
+    }
+
+    return $value;
 }
 
-function teacherSeedStudentIds(): array
+function firstSectionId(array $sections, string $message): int
 {
-    return [7, 8, 9, 10];
-}
-
-function probeTeacherSection(SessionClient $teacher, string $path, array $params, string $message): array
-{
-    $lastError = 'No section candidate was tried.';
-
-    foreach (teacherSeedSectionIds() as $sectionId) {
-        $response = $teacher->get(queryPath($path, array_merge($params, ['section_id' => $sectionId])));
-
-        if ($response->status !== 200) {
-            $lastError = "HTTP {$response->status} for section {$sectionId}";
-            continue;
-        }
-
-        try {
-            $data = requireJsonData($response, $message);
-            return [
-                'section_id' => $sectionId,
-                'data' => $data,
-            ];
-        } catch (Throwable $e) {
-            $lastError = $e->getMessage();
+    foreach ($sections as $section) {
+        $sectionId = (int) ($section['section_id'] ?? 0);
+        if ($sectionId > 0) {
+            return $sectionId;
         }
     }
 
-    throw new SmokeFailure($message . ' (' . $lastError . ')');
+    throw new SmokeFailure($message);
 }
 
-function probeTeacherStudent(SessionClient $teacher, string $path, array $params, string $message): array
+function firstStudentId(array $students, string $message): int
 {
-    $lastError = 'No student candidate was tried.';
-
-    foreach (teacherSeedStudentIds() as $studentId) {
-        $response = $teacher->get(queryPath($path, array_merge($params, ['student_id' => $studentId])));
-
-        if ($response->status !== 200) {
-            $lastError = "HTTP {$response->status} for student {$studentId}";
-            continue;
-        }
-
-        try {
-            $data = requireJsonData($response, $message);
-            return [
-                'student_id' => $studentId,
-                'data' => $data,
-            ];
-        } catch (Throwable $e) {
-            $lastError = $e->getMessage();
+    foreach ($students as $student) {
+        $studentId = (int) ($student['user_id'] ?? $student['student_id'] ?? 0);
+        if ($studentId > 0) {
+            return $studentId;
         }
     }
 
-    throw new SmokeFailure($message . ' (' . $lastError . ')');
+    throw new SmokeFailure($message);
 }
 
 function runStep(string $label, callable $fn): void
@@ -381,7 +352,7 @@ try {
     runStep('管理员可登录', function () use ($admin): void {
         $response = $admin->postForm('/login/login.php', [
             'email' => 'admin@school.edu',
-            'password' => '1',
+            'password' => '123456',
         ]);
         assertStatus($response, 200, 'Admin login should complete');
         assertUrlContains($response, '/admin/index.php', 'Admin login should redirect to admin index');
@@ -615,8 +586,8 @@ try {
 
     runStep('教师可登录', function () use ($teacher): void {
         $response = $teacher->postForm('/login/login.php', [
-            'email' => 'limin@school.edu',
-            'password' => '1',
+            'email' => 'teacher@school.edu',
+            'password' => '123456',
         ]);
         assertStatus($response, 200, 'Teacher login should complete');
         assertUrlContains($response, '/teacher/index.php', 'Teacher login should redirect to teacher portal');
@@ -649,13 +620,7 @@ try {
         if (!is_array($sections)) {
             throw new SmokeFailure('Teacher sections API should return an array.');
         }
-
-        if ($sections !== []) {
-            $teacherSectionId = (int)($sections[0]['section_id'] ?? 0);
-        }
-        if ($teacherSectionId <= 0) {
-            $teacherSectionId = teacherSeedSectionIds()[0];
-        }
+        $teacherSectionId = firstSectionId($sections, 'Demo seed is incomplete: teacher has no section.');
 
         $students = requireJsonData(
             $teacher->get(queryPath('/teacher/api/teacher.php', [
@@ -667,27 +632,25 @@ try {
         if (!is_array($students)) {
             throw new SmokeFailure('Teacher section students API should return an array.');
         }
-        if ($students !== []) {
-            $teacherStudentId = (int)($students[0]['user_id'] ?? 0);
-        }
-        if ($teacherStudentId <= 0) {
-            $teacherStudentId = teacherSeedStudentIds()[0];
-        }
+        $teacherStudentId = firstStudentId($students, 'Demo seed is incomplete: teacher section has no student.');
     });
 
-    runStep('教师成绩接口可访问', function () use ($teacher): void {
-        $result = probeTeacherStudent($teacher, '/teacher/api/grades.php', [
-            'action' => 'get_student_gpa',
-        ], 'Teacher grades API should respond successfully');
-        $data = $result['data'];
+    runStep('教师成绩接口可访问', function () use ($teacher, &$teacherStudentId): void {
+        $data = requireJsonData(
+            $teacher->get(queryPath('/teacher/api/grades.php', [
+                'action' => 'get_student_gpa',
+                'student_id' => requirePositiveId($teacherStudentId, 'Demo seed is incomplete: missing teacher student id.'),
+            ])),
+            'Teacher grades API should respond successfully'
+        );
         if (!is_array($data)) {
             throw new SmokeFailure('Teacher grades API should return a data object.');
         }
     });
 
     runStep('教师成绩统计接口可访问', function () use ($teacher, &$teacherSectionId, &$teacherStudentId): void {
-        $sectionId = $teacherSectionId > 0 ? $teacherSectionId : teacherSeedSectionIds()[0];
-        $studentId = $teacherStudentId > 0 ? $teacherStudentId : teacherSeedStudentIds()[0];
+        $sectionId = requirePositiveId($teacherSectionId, 'Demo seed is incomplete: missing teacher section id.');
+        $studentId = requirePositiveId($teacherStudentId, 'Demo seed is incomplete: missing teacher student id.');
 
         foreach ([
             'get_final_scores',
@@ -719,28 +682,34 @@ try {
         }
     });
 
-    runStep('教师考试接口可访问', function () use ($teacher): void {
-        $result = probeTeacherSection($teacher, '/teacher/api/teacher.php', [
-            'action' => 'get_section_exams',
-        ], 'Teacher exams API should respond successfully');
-        $data = $result['data'];
+    runStep('教师考试接口可访问', function () use ($teacher, &$teacherSectionId): void {
+        $data = requireJsonData(
+            $teacher->get(queryPath('/teacher/api/teacher.php', [
+                'action' => 'get_section_exams',
+                'section_id' => requirePositiveId($teacherSectionId, 'Demo seed is incomplete: missing teacher section id.'),
+            ])),
+            'Teacher exams API should respond successfully'
+        );
         if (!is_array($data)) {
             throw new SmokeFailure('Teacher exams API should return a data array.');
         }
     });
 
-    runStep('教师考勤接口可访问', function () use ($teacher): void {
-        $result = probeTeacherSection($teacher, '/teacher/api/attendance.php', [
-            'action' => 'get_section_schedules',
-        ], 'Teacher attendance API should respond successfully');
-        $data = $result['data'];
+    runStep('教师考勤接口可访问', function () use ($teacher, &$teacherSectionId): void {
+        $data = requireJsonData(
+            $teacher->get(queryPath('/teacher/api/attendance.php', [
+                'action' => 'get_section_schedules',
+                'section_id' => requirePositiveId($teacherSectionId, 'Demo seed is incomplete: missing teacher section id.'),
+            ])),
+            'Teacher attendance API should respond successfully'
+        );
         if (!is_array($data)) {
             throw new SmokeFailure('Teacher attendance API should return a data array.');
         }
     });
 
     runStep('教师课表/考勤/工作量/公告只读接口可访问', function () use ($teacher, &$teacherSectionId, &$teacherScheduleId, &$teacherScheduleProbe): void {
-        $sectionId = $teacherSectionId > 0 ? $teacherSectionId : teacherSeedSectionIds()[0];
+        $sectionId = requirePositiveId($teacherSectionId, 'Demo seed is incomplete: missing teacher section id.');
 
         $allSchedules = requireJsonData(
             $teacher->get('/teacher/api/schedule.php?action=get_teacher_schedule'),
@@ -837,7 +806,7 @@ try {
 
     runStep('学生可登录', function () use ($student): void {
         $response = $student->postForm('/login/login.php', [
-            'email' => 'liuyang@school.edu',
+            'email' => 'student@school.edu',
             'password' => '123456',
         ]);
         assertStatus($response, 200, 'Student login should complete');
