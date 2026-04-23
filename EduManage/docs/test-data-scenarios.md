@@ -1,6 +1,6 @@
 # EduManage 业务验证测试数据说明
 
-本文档对应 [tests/sql/seed_business_validation_data.sql]()，用于说明这批测试数据的设计目的、关系结构和可验证场景。
+本文档对应 `tests/sql/qa_business_validation_seed.sql`，用于说明这批 QA / 业务验证测试数据的设计目的、关系结构和可验证场景。该文件不是演示 seed。
 
 ## 1. 表关系摘要
 
