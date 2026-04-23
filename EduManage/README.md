@@ -8,8 +8,13 @@
 
 - 项目目录名称统一为 `EduManage`
 - 推荐本地路径示例：`D:\phpstudy_pro\WWW\EduManage`
-- 子目录访问示例：`http://localhost/EduManage/`
+- 标准访问示例：`http://localhost/`
 - 默认数据库示例名称仍为 `school_db`
+
+标准演示导入顺序：
+
+1. `school_db_backup.sql`
+2. `tests/sql/demo_seed.sql`
 
 ## 文档入口
 
