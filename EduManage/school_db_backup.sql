@@ -914,8 +914,14 @@ CREATE PROCEDURE `sp_batch_record_attendance`(IN  p_teacher_id  INT UNSIGNED,
     OUT p_success     TINYINT,
     OUT p_message     VARCHAR(500))
 BEGIN
-    DECLARE v_section_id INT UNSIGNED;
-    DECLARE v_teaches    INT DEFAULT 0;
+    DECLARE v_section_id  INT UNSIGNED;
+    DECLARE v_teaches     INT DEFAULT 0;
+    DECLARE v_enrolled    INT DEFAULT 0;
+    DECLARE v_idx         INT DEFAULT 0;
+    DECLARE v_count       INT DEFAULT 0;
+    DECLARE v_student_id  INT UNSIGNED;
+    DECLARE v_status      VARCHAR(20);
+    DECLARE v_note        VARCHAR(200);
 
     SELECT section_id INTO v_section_id FROM schedule WHERE schedule_id = p_schedule_id;
 
@@ -933,30 +939,38 @@ BEGIN
             SET p_success = 0; SET p_inserted = 0;
             SET p_message = 'Week must be between 1 and 16.';
         ELSE
-            INSERT INTO attendance (schedule_id, student_id, week, status, note, recorded_by)
-            SELECT p_schedule_id, jt.student_id, p_week, jt.status, jt.note, p_teacher_id
-            FROM JSON_TABLE(
-                p_records,
-                '$[*]' COLUMNS (
-                    student_id INT UNSIGNED PATH '$.student_id',
-                    status     VARCHAR(20)  PATH '$.status' DEFAULT 'present' ON EMPTY,
-                    note       VARCHAR(200) PATH '$.note'
-                )
-            ) AS jt
-            WHERE EXISTS (
-                SELECT 1 FROM takes
-                WHERE student_id = jt.student_id
-                  AND section_id = v_section_id
-            )
-            ON DUPLICATE KEY UPDATE
-                status      = VALUES(status),
-                note        = VALUES(note),
-                recorded_by = VALUES(recorded_by),
-                recorded_at = NOW();
+            SET v_count    = JSON_LENGTH(p_records);
+            SET v_idx      = 0;
+            SET p_inserted = 0;
 
-            SET p_inserted = ROW_COUNT();
-            SET p_success  = 1;
-            SET p_message  = CONCAT(p_inserted, ' attendance record(s) saved.');
+            WHILE v_idx < v_count DO
+                SET v_student_id = JSON_EXTRACT(p_records, CONCAT('$[', v_idx, '].student_id'));
+                SET v_status     = JSON_UNQUOTE(JSON_EXTRACT(p_records, CONCAT('$[', v_idx, '].status')));
+                SET v_note       = JSON_UNQUOTE(JSON_EXTRACT(p_records, CONCAT('$[', v_idx, '].note')));
+
+                IF v_status IS NULL OR v_status NOT IN ('present','absent','late','excused') THEN
+                    SET v_status = 'present';
+                END IF;
+
+                SELECT COUNT(*) INTO v_enrolled FROM takes
+                WHERE student_id = v_student_id AND section_id = v_section_id;
+
+                IF v_enrolled > 0 THEN
+                    INSERT INTO attendance (schedule_id, student_id, week, status, note, recorded_by)
+                    VALUES (p_schedule_id, v_student_id, p_week, v_status, v_note, p_teacher_id)
+                    ON DUPLICATE KEY UPDATE
+                        status      = v_status,
+                        note        = v_note,
+                        recorded_by = p_teacher_id,
+                        recorded_at = NOW();
+                    SET p_inserted = p_inserted + 1;
+                END IF;
+
+                SET v_idx = v_idx + 1;
+            END WHILE;
+
+            SET p_success = 1;
+            SET p_message = CONCAT(p_inserted, ' attendance record(s) saved.');
         END IF;
     END IF;
 END
@@ -2625,9 +2639,9 @@ BEGIN
             INSERT INTO attendance (schedule_id, student_id, week, status, note, recorded_by)
             VALUES (p_schedule_id, p_student_id, p_week, p_status, p_note, p_teacher_id)
             ON DUPLICATE KEY UPDATE
-                status = VALUES(status),
-                note = VALUES(note),
-                recorded_by = VALUES(recorded_by),
+                status      = p_status,
+                note        = p_note,
+                recorded_by = p_teacher_id,
                 recorded_at = NOW();
 
             SET p_success = 1;
