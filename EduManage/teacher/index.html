@@ -1,0 +1,3556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>教师门户</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/portal-common.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="portal-shell portal-teacher">
+
+<div class="window">
+  <!-- Title Bar -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <span class="traffic red"></span>
+      <span class="traffic yellow"></span>
+      <span class="traffic green"></span>
+    </div>
+    <div class="titlebar-title" id="pageTitle">教师门户</div>
+    <div class="titlebar-right">
+      <span class="titlebar-info" id="titlebarInfo"></span>
+    </div>
+  </div>
+
+  <!-- App Body -->
+  <div class="app-body">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Teacher identity -->
+      <div class="sidebar-teacher">
+        <div class="sidebar-avatar" id="sidebarAvatar"></div>
+        <div class="sidebar-info">
+          <div class="sidebar-name" id="sidebarName">加载中…</div>
+          <div class="sidebar-role" id="sidebarRole"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section-label">总览</div>
+      <div class="nav-item active" data-view="dashboard">
+        <span class="nav-icon">🏠</span> 仪表盘
+      </div>
+
+      <div class="sidebar-section-label">教学</div>
+      <div class="nav-item" data-view="courses">
+        <span class="nav-icon">📚</span> 我的课程
+      </div>
+      <div class="nav-item" data-view="grades">
+        <span class="nav-icon">📝</span> 成绩管理
+        <span class="nav-badge" id="ungradedBadge" style="display:none"></span>
+      </div>
+      <div class="nav-item" data-view="exams">
+        <span class="nav-icon">📊</span> 考试记录
+      </div>
+      <div class="nav-item" data-view="schedule">
+        <span class="nav-icon">📅</span> 课程表
+      </div>
+      <div class="nav-item" data-view="applications">
+        <span class="nav-icon">📋</span> 课程管理
+      </div>
+
+      <div class="sidebar-section-label">扩展</div>
+      <div class="nav-item" data-view="announcements">
+        <span class="nav-icon">📢</span> 课程公告
+      </div>
+      <div class="nav-item" data-view="attendance">
+        <span class="nav-icon">✅</span> 考勤管理
+      </div>
+      <div class="nav-item" data-view="batch-import">
+        <span class="nav-icon">📥</span> 批量上传
+      </div>
+      <div class="nav-item" data-view="workload">
+        <span class="nav-icon">📈</span> 工作量报告
+      </div>
+
+      <div class="sidebar-section-label">账号</div>
+      <div class="nav-item" onclick="window.location.href='/login/logout.php'">
+        <span class="nav-icon">🚪</span> 退出登录
+      </div>
+      <div class="nav-item" data-view="profile">
+        <span class="nav-icon">👤</span> 个人设置
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="view active" id="view-dashboard">
+        <div class="view-header">
+          <div>
+            <div class="view-title" id="dashGreeting">Good morning 👋</div>
+            <div class="view-subtitle">Here's your teaching overview</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-value" id="stat-sections">—</div>
+            <div class="stat-label">授课班级</div>
+            <div class="stat-sub">您当前任教的班级数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-value" id="stat-students">—</div>
+            <div class="stat-label">学生总数</div>
+            <div class="stat-sub">各班级选课学生合计</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📝</div>
+            <div class="stat-value" id="stat-exams">—</div>
+            <div class="stat-label">考试记录</div>
+            <div class="stat-sub">本学期已录入的考试记录</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="stat-avg">—</div>
+            <div class="stat-label">平均分</div>
+            <div class="stat-sub">所有考试的综合平均分</div>
+          </div>
+        </div>
+
+        <!-- Sections list -->
+        <div class="card">
+          <div class="card-section-title">
+            <span>我的班级</span>
+            <button class="btn btn-ghost btn-sm" onclick="Nav.go('courses')">查看全部 →</button>
+          </div>
+          <div class="table-wrap">
+            <table id="dashSectionsTable">
+              <thead>
+                <tr>
+                  <th>课程</th><th>学期</th><th>选课人数</th>
+                  <th>平均分</th><th>待评</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="dashSectionsBody">
+                <tr><td colspan="6"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ COURSES ══ -->
+      <div class="view" id="view-courses">
+        <div class="view-header">
+          <div>
+            <div class="view-title">我的课程</div>
+            <div class="view-subtitle">您所任教的班级列表</div>
+          </div>
+        </div>
+        <div class="courses-grid" id="coursesGrid">
+          <div class="spinner" style="grid-column:1/-1"></div>
+        </div>
+      </div>
+
+      <!-- ══ SECTION DETAIL ══ -->
+      <div class="view" id="view-section-detail">
+        <button class="back-btn" id="backFromDetail">← 返回课程列表</button>
+        <div id="sectionDetailContent"></div>
+      </div>
+
+      <!-- ══ GRADE MANAGEMENT ══ -->
+      <div class="view" id="view-grades">
+        <div class="view-header">
+          <div>
+            <div class="view-title">成绩管理</div>
+            <div class="view-subtitle">为已选课学生分配并管理等级成绩</div>
+          </div>
+        </div>
+
+        <!-- Pending exam upload notifications -->
+        <div id="pendingExamsCard" class="pending-exams-card" style="margin-bottom:16px;display:none">
+          <div class="pending-exams-head">
+            ⚠️ 待录入成绩提醒
+          </div>
+          <div id="pendingExamsList"></div>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" id="gradesSection" style="max-width:280px">
+            <option value="">— 选择班级 —</option>
+          </select>
+          <button class="btn btn-primary" id="autoAssignBtn" style="display:none" onclick="Grades.autoAssign()">
+            ✨ 自动分配成绩
+          </button>
+        </div>
+
+        <div class="card" id="gradesCard" style="display:none">
+          <div class="card-section-title">
+            <span id="gradesSectionTitle">Students</span>
+            <span style="font-size:12px;color:var(--text-sec)" id="gradesCount"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>学生</th><th>院系</th>
+                  <th>测验均分</th><th>期中</th><th>期末</th>
+                  <th>加权均分</th><th>建议等级</th><th>等级成绩</th>
+                </tr>
+              </thead>
+              <tbody id="gradesBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="gradesEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">📝</div>
+          请选择上方班级以管理成绩
+        </div>
+      </div>
+
+      <!-- ══ EXAM MANAGEMENT ══ -->
+      <div class="view" id="view-exams">
+        <div class="view-header">
+          <div>
+            <div class="view-title">考试管理</div>
+            <div class="view-subtitle">发布考试任务并追踪成绩录入进度</div>
+          </div>
+          <button class="btn btn-primary" onclick="ExamEvents.openPublishModal()" id="publishExamBtn" style="display:none">
+            📋 发布考试
+          </button>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" id="examsSection" style="max-width:280px">
+            <option value="">— 选择班级 —</option>
+          </select>
+        </div>
+
+        <!-- Published exam events -->
+        <div class="card" id="examEventsCard" style="display:none;margin-bottom:16px">
+          <div class="card-section-title">
+            <span>已发布考试</span>
+          </div>
+          <div id="examEventsBody"><div class="spinner"></div></div>
+        </div>
+
+        <!-- Individual score records -->
+        <div class="card" id="examsCard" style="display:none">
+          <div class="card-section-title">
+            <span id="examsSectionTitle">成绩明细</span>
+            <span style="font-size:12px;color:var(--text-sec)" id="examsCount"></span>
+          </div>
+          <div style="padding:0 0 12px">
+            <select class="form-select" id="examsTypeFilter" style="max-width:160px">
+              <option value="">全部类型</option>
+              <option value="final">期末</option>
+              <option value="midterm">期中</option>
+              <option value="quiz">测验</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>学生</th><th>考试类型</th><th>日期</th>
+                  <th>成绩</th><th>计算等级</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="examsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="examsEmpty" class="empty-state">
+          <div class="empty-icon">📊</div>
+          请选择班级以查看考试信息
+        </div>
+      </div>
+
+      <!-- ══ PROFILE ══ -->
+      <div class="view" id="view-profile">
+        <div class="view-header">
+          <div>
+            <div class="view-title">个人设置</div>
+            <div class="view-subtitle">管理您的账户信息</div>
+          </div>
+        </div>
+
+        <div class="profile-layout">
+          <!-- Avatar card -->
+          <div class="profile-avatar-card">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profileAvatar"></div>
+              <div class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()" title="上传头像">
+                📷
+              </div>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="Profile.previewAvatar(this)">
+            </div>
+            <div class="profile-name" id="profileName">—</div>
+            <div class="profile-role-badge" id="profileTitle">—</div>
+            <div class="profile-info-row">📧 <span id="profileEmail">—</span></div>
+            <div class="profile-info-row">🏫 <span id="profileDept">—</span></div>
+            <div class="profile-info-row">📅 加入于 <span id="profileJoined">—</span></div>
+          </div>
+
+          <!-- Edit form -->
+          <div class="card" style="padding:22px">
+            <div style="font-size:15px;font-weight:700;margin-bottom:18px;color:var(--text)">编辑信息</div>
+            <div class="form-group">
+              <label class="form-label">姓名</label>
+              <input type="text" class="form-input" id="editName" placeholder="请输入姓名">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">电话</label>
+                <input type="tel" class="form-input" id="editPhone" inputmode="numeric" maxlength="11" pattern="\d{11}" title="请输入11位数字手机号" placeholder="11位数字手机号">
+              </div>
+              <div class="form-group">
+                <label class="form-label">性别</label>
+                <select class="form-select" id="editGender">
+                  <option value="male">男</option>
+                  <option value="female">女</option>
+                  <option value="other">其他</option>
+                </select>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+              <button class="btn btn-secondary" onclick="Profile.load()">重置</button>
+              <button class="btn btn-primary" onclick="Profile.save()">保存修改</button>
+            </div>
+          </div>
+
+          <!-- Password change card -->
+          <div class="card" style="padding:22px;margin-top:16px">
+            <div style="font-size:15px;font-weight:700;margin-bottom:18px;color:var(--text)">修改密码</div>
+            <div class="form-group">
+              <label class="form-label">当前密码</label>
+              <input type="password" class="form-input" id="pwdCurrent" placeholder="请输入当前密码">
+            </div>
+            <div class="form-group">
+              <label class="form-label">新密码</label>
+              <input type="password" class="form-input" id="pwdNew" placeholder="至少 6 位">
+            </div>
+            <div class="form-group">
+              <label class="form-label">确认新密码</label>
+              <input type="password" class="form-input" id="pwdConfirm" placeholder="再次输入新密码">
+            </div>
+            <div style="display:flex;justify-content:flex-end">
+              <button class="btn btn-primary" onclick="Profile.changePassword()">修改密码</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCHEDULE ══ -->
+      <div class="view" id="view-schedule">
+        <div class="view-header">
+          <div>
+            <div class="view-title">课程表</div>
+            <div class="view-subtitle">您的教学课表 — 点击课程可查看详情</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="Schedule.load()">🔄 刷新</button>
+        </div>
+
+        <!-- Week navigation bar -->
+        <div class="week-nav" id="weekNav" style="display:none">
+          <span class="week-nav-label">第</span>
+          <select class="week-nav-select" id="weekSelect" onchange="Schedule.loadWeek(+this.value)"></select>
+          <span class="week-range-info" id="weekRangeInfo"></span>
+          <div class="week-nav-spacer"></div>
+          <div class="week-legend" id="weekLegend"></div>
+          <button class="btn btn-secondary btn-sm" id="prevWeekBtn" onclick="Schedule.stepWeek(-1)">‹</button>
+          <button class="btn btn-secondary btn-sm" id="nextWeekBtn" onclick="Schedule.stepWeek(+1)">›</button>
+        </div>
+
+        <div id="scheduleContent">
+          <div class="spinner"></div>
+        </div>
+      </div>
+
+      <!-- ══ APPLICATIONS ══ -->
+      <div class="view" id="view-applications">
+        <div class="view-header">
+          <div>
+            <div class="view-title">课程管理</div>
+            <div class="view-subtitle">申请教授课程、管理开课信息与指导学生</div>
+          </div>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar" style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0">
+          <button class="tab-btn active" id="appTab-overview"   onclick="Applications.switchTab('overview')">教学概览</button>
+          <button class="tab-btn"        id="appTab-advisees"   onclick="Applications.switchTab('advisees')">我的指导学生</button>
+        </div>
+
+        <!-- Tab: Available Courses (DEPRECATED) -->
+        <div id="appPane-courses" style="display:none">
+        </div>
+
+        <!-- Tab: Teaching Overview -->
+        <div id="appPane-overview">
+          <div class="card">
+            <div class="card-section-title">
+              <span>我的教学任务</span>
+              <button class="btn btn-ghost btn-sm" onclick="Applications.loadOverview()">刷新</button>
+            </div>
+            <div class="table-wrap">
+              <table id="overviewTable">
+                <thead>
+                  <tr>
+                    <th>课程</th><th>学期</th><th>已选</th><th>容量</th>
+                    <th>占用率</th><th>排名</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewBody"><tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-ter)"><div class="spinner"></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Section stats -->
+          <div class="card" style="margin-top:16px">
+            <div class="card-section-title">开课统计</div>
+            <div class="table-wrap">
+              <table id="enrollStatsTable">
+                <thead><tr><th>课程</th><th>学期</th><th>已选</th><th>容量</th></tr></thead>
+                <tbody id="enrollStatsBody"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-ter)">Loading…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: My Advisees -->
+        <div id="appPane-advisees" style="display:none">
+          <div class="card">
+            <div class="card-section-title">
+              <span>我指导的学生</span>
+              <button class="btn btn-ghost btn-sm" onclick="Applications.loadAdvisees()">刷新</button>
+            </div>
+            <div id="adviseesList"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ANNOUNCEMENTS ══ -->
+      <div class="view" id="view-announcements">
+        <div class="view-header">
+          <div>
+            <div class="view-title">课程公告</div>
+            <div class="view-subtitle">向各班级学生发布通知与公告</div>
+          </div>
+          <button class="btn btn-primary" onclick="Announcements.openPostModal()">+ 发布公告</button>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar" style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0">
+          <button class="tab-btn active" id="annTab-all"     onclick="Announcements.switchTab('all')">我发布的公告</button>
+          <button class="tab-btn"        id="annTab-inbox"   onclick="Announcements.switchTab('inbox')">我收到的公告</button>
+          <button class="tab-btn"        id="annTab-section" onclick="Announcements.switchTab('section')">按班级筛选</button>
+        </div>
+
+        <!-- Pane: All -->
+        <div id="annPane-all">
+          <div class="card">
+            <div class="card-section-title">
+              <span>我发布的所有公告</span>
+              <button class="btn btn-ghost btn-sm" onclick="Announcements.loadAll()">🔄 刷新</button>
+            </div>
+            <div id="annAllList"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Pane: Inbox (received announcements) -->
+        <div id="annPane-inbox" style="display:none">
+          <div class="filter-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="annInboxSearch" class="form-input" placeholder="搜索标题/内容" style="max-width:420px" />
+              <button class="btn btn-ghost btn-sm" id="annInboxSearchBtn">搜索</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-ghost btn-sm" onclick="Announcements.loadInbox()">🔄 刷新</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-section-title">
+              <span>我收到的公告</span>
+            </div>
+            <div id="annInboxList"><div class="spinner"></div></div>
+            <div id="annInboxPagination" style="display:flex;gap:6px;align-items:center;margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Pane: By section -->
+        <div id="annPane-section" style="display:none">
+          <div class="filter-bar">
+            <select class="form-select" id="annSectionSel" style="max-width:280px">
+              <option value="">— 选择班级 —</option>
+            </select>
+          </div>
+          <div class="card" id="annSectionCard" style="display:none">
+            <div class="card-section-title">
+              <span id="annSectionTitle">公告列表</span>
+            </div>
+            <div id="annSectionList"></div>
+          </div>
+          <div id="annSectionEmpty" class="empty-state">
+            <div class="empty-icon">📢</div>请选择班级查看公告
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ATTENDANCE ══ -->
+      <div class="view" id="view-attendance">
+        <div class="view-header">
+          <div>
+            <div class="view-title">考勤管理</div>
+            <div class="view-subtitle">录入课堂考勤，查看出勤率报表</div>
+          </div>
+        </div>
+
+        <div class="tab-bar" style="display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0">
+          <button class="tab-btn active" id="attTab-record" onclick="Attendance.switchTab('record')">录入考勤</button>
+          <button class="tab-btn"        id="attTab-report" onclick="Attendance.switchTab('report')">出勤报表</button>
+        </div>
+
+        <!-- Pane: Record -->
+        <div id="attPane-record">
+          <div class="filter-bar" style="flex-wrap:wrap;gap:10px">
+            <select class="form-select" id="attSection" style="max-width:260px" onchange="Attendance.onSectionChange()">
+              <option value="">— 选择班级 —</option>
+            </select>
+            <select class="form-select" id="attSchedule" style="max-width:220px" disabled onchange="Attendance.onScheduleChange()">
+              <option value="">— 选择课次 —</option>
+            </select>
+            <select class="form-select" id="attWeek" style="max-width:110px" disabled onchange="Attendance.loadAttendance()">
+              <option value="">— 周次 —</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" id="attQuickAll" style="display:none" onclick="Attendance.setAll('present')">全部出勤</button>
+            <button class="btn btn-primary btn-sm" id="attSaveBtn" style="display:none" onclick="Attendance.saveAll()">💾 保存考勤</button>
+          </div>
+
+          <div class="card" id="attCard" style="display:none">
+            <div class="card-section-title">
+              <span id="attCardTitle">考勤录入</span>
+              <span style="font-size:12px;color:var(--text-sec)" id="attCardSub"></span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>学生</th><th>院系</th>
+                    <th style="width:140px">状态</th><th>备注</th>
+                  </tr>
+                </thead>
+                <tbody id="attBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="attEmpty" class="empty-state">
+            <div class="empty-icon">✅</div>请选择班级、课次和周次
+          </div>
+        </div>
+
+        <!-- Pane: Report -->
+        <div id="attPane-report" style="display:none">
+          <div class="filter-bar" style="gap:10px">
+            <select class="form-select" id="attReportSection" style="max-width:280px" onchange="Attendance.loadReport()">
+              <option value="">— 选择班级 —</option>
+            </select>
+            <label style="font-size:13px;color:var(--text-sec);display:flex;align-items:center;gap:6px">
+              预警阈值 %
+              <input type="number" id="attWarnThreshold" class="form-input" value="75" min="0" max="100" style="width:70px" onchange="Attendance.loadReport()">
+            </label>
+          </div>
+          <div class="card" id="attReportCard" style="display:none">
+            <div class="card-section-title">
+              <span>出勤率报表</span>
+              <span style="font-size:12px;color:var(--text-sec)" id="attReportSub"></span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>学生</th><th>院系</th>
+                    <th>总课次</th><th>出勤</th><th>缺勤</th><th>迟到</th>
+                    <th>出勤率</th><th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="attReportBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="attReportEmpty" class="empty-state">
+            <div class="empty-icon">📊</div>请选择班级查看出勤报表
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit log removed -->
+
+      <!-- ══ BATCH IMPORT ══ -->
+      <div class="view" id="view-batch-import">
+        <div class="view-header">
+          <div>
+            <div class="view-title">批量成绩上传</div>
+            <div class="view-subtitle">通过 CSV 文件或粘贴数据批量录入考试成绩</div>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="card batch-step-card" style="margin-bottom:16px">
+          <div class="card-section-title">第一步：选择班级和考试信息</div>
+          <div class="batch-setup-grid">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">班级</label>
+              <select class="form-select" id="biSection" onchange="BatchImport.onSectionChange()">
+                <option value="">— 选择班级 —</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">考试类型</label>
+              <select class="form-select" id="biType">
+                <option value="final">期末</option>
+                <option value="midterm">期中</option>
+                <option value="quiz">测验</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">考试日期</label>
+              <input type="date" class="form-input" id="biDate">
+            </div>
+            <button class="btn btn-ghost btn-sm" id="biTemplateBtn" style="display:none" onclick="BatchImport.downloadTemplate()">
+              ⬇ 下载模板
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Input -->
+        <div class="card" id="biInputCard" style="display:none;margin-bottom:16px">
+          <div class="card-section-title">第二步：导入成绩数据</div>
+          <div class="tab-bar" style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0">
+            <button class="tab-btn active" id="biTab-csv"   onclick="BatchImport.switchInputTab('csv')">上传 CSV 文件</button>
+            <button class="tab-btn"        id="biTab-paste" onclick="BatchImport.switchInputTab('paste')">粘贴数据</button>
+          </div>
+          <!-- CSV pane -->
+          <div id="biPane-csv">
+            <div class="batch-dropzone"
+                 onclick="document.getElementById('biFileInput').click()"
+                 ondragover="event.preventDefault()" ondrop="BatchImport.onFileDrop(event)">
+              <div style="font-size:32px;margin-bottom:8px">📄</div>
+              <div style="font-size:14px;font-weight:600;color:var(--text)">点击上传或拖拽 CSV 文件</div>
+              <div style="font-size:12px;color:var(--text-sec);margin-top:4px">格式：学号,成绩（支持带表头；成绩范围 0-100）</div>
+              <input type="file" id="biFileInput" accept=".csv,.txt" style="display:none" onchange="BatchImport.onFileChange(this)">
+            </div>
+          </div>
+          <!-- Paste pane -->
+          <div id="biPane-paste" style="display:none">
+            <div class="batch-paste-help">
+              每行一条记录，格式：<code style="background:var(--bg);padding:2px 6px;border-radius:4px">学号,成绩</code>
+            </div>
+            <textarea class="form-input" id="biPasteArea" rows="8"
+              placeholder="2021001,85&#10;2021002,92.5&#10;2021003,78"
+              style="font-family:monospace;resize:vertical"></textarea>
+            <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="BatchImport.parsePaste()">解析数据</button>
+          </div>
+          <div class="batch-help-box">
+            <div class="batch-help-title">导入说明</div>
+            <div class="batch-help-text">建议先下载模板，再按“学号,成绩”填写。解析后会先展示匹配结果，只有有效记录会被提交。</div>
+          </div>
+        </div>
+
+        <!-- Step 3: Preview -->
+        <div class="card" id="biPreviewCard" style="display:none">
+          <div class="card-section-title">
+            <span>第三步：确认并提交</span>
+            <span style="font-size:12px;color:var(--text-sec)" id="biPreviewSub"></span>
+          </div>
+          <div class="batch-result-summary" id="biResultSummary" style="display:none"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>学号</th><th>姓名</th><th>当前成绩</th><th>新成绩</th><th>状态</th></tr></thead>
+              <tbody id="biPreviewBody"></tbody>
+            </table>
+          </div>
+          <div class="batch-preview-actions">
+            <button class="btn btn-secondary" onclick="BatchImport.reset()">重新输入</button>
+            <button class="btn btn-primary" id="biSubmitBtn" onclick="BatchImport.submit()">💾 提交成绩</button>
+          </div>
+        </div>
+
+        <div id="biEmpty" class="empty-state">
+          <div class="empty-icon">📥</div>请先选择班级
+        </div>
+      </div>
+
+      <!-- ══ WORKLOAD ══ -->
+      <div class="view" id="view-workload">
+        <div class="view-header">
+          <div>
+            <div class="view-title">工作量报告</div>
+            <div class="view-subtitle">查看您的教学工作量统计与各班级详情</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="Workload.load()">🔄 刷新</button>
+        </div>
+
+        <div class="filter-bar" style="gap:10px;margin-bottom:20px">
+          <select class="form-select" id="wlSemester" style="max-width:130px" onchange="Workload.load()">
+            <option value="">全部学期</option>
+          </select>
+          <select class="form-select" id="wlYear" style="max-width:110px" onchange="Workload.load()">
+            <option value="0">全部年份</option>
+          </select>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📖</div>
+            <div class="stat-value" id="wl-sections">—</div>
+            <div class="stat-label">授课班级</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🎓</div>
+            <div class="stat-value" id="wl-students">—</div>
+            <div class="stat-label">学生总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value" id="wl-credits">—</div>
+            <div class="stat-label">学分总量</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🕐</div>
+            <div class="stat-value" id="wl-hours">—</div>
+            <div class="stat-label">周课时（h）</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="wl-graded">—</div>
+            <div class="stat-label">已批改</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="wl-pending">—</div>
+            <div class="stat-label">待批改</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px">
+          <div class="card-section-title">
+            <span>各班级详情</span>
+            <span style="font-size:12px;color:var(--text-sec)" id="wlSectionCount"></span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>课程</th><th>学期</th><th>学分</th>
+                  <th>学生数</th><th>考试数</th><th>平均分</th>
+                  <th>周课时</th><th>批改进度</th>
+                </tr>
+              </thead>
+              <tbody id="wlBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-ter)">请先打开此页面加载数据</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main><!-- /content -->
+  </div><!-- /app-body -->
+</div><!-- /window -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)Modal.close()">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Modal</div>
+      <button class="modal-close" onclick="Modal.close()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- ══ EXAM MODAL (Add/Edit) ══ -->
+<div class="modal-overlay" id="examModalOverlay" onclick="if(event.target===this)ExamModal.close()">
+  <div class="modal" id="examModalBox">
+    <div class="modal-header">
+      <div class="modal-title" id="examModalTitle">添加考试记录</div>
+      <button class="modal-close" onclick="ExamModal.close()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="emExamId">
+      <div class="form-group">
+        <label class="form-label">学生</label>
+        <select class="form-select" id="emStudent">
+          <option value="">— 选择学生 —</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">考试类型</label>
+          <select class="form-select" id="emType">
+            <option value="final">期末</option>
+            <option value="midterm">期中</option>
+            <option value="quiz">测验</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">考试日期</label>
+          <input type="date" class="form-input" id="emDate">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">成绩 (0 – 100)</label>
+        <input type="number" class="form-input" id="emScore" min="0" max="100" step="0.5" placeholder="如 87.5">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="ExamModal.close()">取消</button>
+      <button class="btn btn-primary" id="examModalSaveBtn" onclick="ExamModal.save()">保存记录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIG — 统一从 APP_PATHS 读取接口、资源和枚举
+═══════════════════════════════════════════════════════ */
+const API          = window.teacherGetApiUrl('teacher');
+const GRADES_API   = window.teacherGetApiUrl('grades');
+const ANN_API      = window.teacherGetApiUrl('announcement');
+const ATT_API      = window.teacherGetApiUrl('attendance');
+const WORKLOAD_API = window.teacherGetApiUrl('workload');
+const APP_API      = window.teacherGetApiUrl('application');
+const SCHEDULE_API = window.teacherGetApiUrl('schedule');
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const State = {
+  profile:  null,
+  sections: [],
+  currentSectionId: null,
+  currentSectionStudents: [],
+  currentExams: [],
+  ungradedCount: 0,
+};
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+const Toast = {
+  show(msg, type = 'ok') {
+    const icons = { ok: '✅', error: '❌', warn: '⚠️' };
+    const el = document.createElement('div');
+    el.className = `toast${type === 'error' ? ' error' : type === 'warn' ? ' warn' : ''}`;
+    el.innerHTML = `<span>${icons[type] || '✅'}</span><span>${escHtml(msg || '')}</span>`;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   UTILS
+═══════════════════════════════════════════════════════ */
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function messageOf(payload, fallback = '请求失败') {
+  if (!payload) return fallback;
+  return payload.message || payload.msg || payload.error || fallback;
+}
+
+function teacherBootIdentity() {
+  return window.TEACHER_BOOT || {};
+}
+
+function initialsOf(name) {
+  const label = String(name || '教师用户').trim();
+  if (!label) return '教';
+  return label.split(/\s+/).map(w => (w || '')[0]).join('').toUpperCase().slice(0, 2) || label.slice(0, 1);
+}
+
+function setBusyState(button, busy, loadingText) {
+  if (!button) return;
+  if (!button.dataset.originalText) {
+    button.dataset.originalText = button.innerHTML;
+  }
+  button.disabled = !!busy;
+  button.classList.toggle('is-busy', !!busy);
+  button.innerHTML = busy
+    ? escHtml(loadingText || button.dataset.loadingText || '处理中...')
+    : button.dataset.originalText;
+}
+
+/* ═══════════════════════════════════════════════════════
+   API HELPERS
+═══════════════════════════════════════════════════════ */
+async function parseResponseJson(res, fallback = '请求失败') {
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || json.ok === false) {
+    throw new Error(messageOf(json, fallback));
+  }
+  return json;
+}
+
+async function apiFetch(action, options = {}) {
+  const url = `${API}?action=${action}`;
+  const res  = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const json = await parseResponseJson(res, '接口请求失败');
+  return json.data;
+}
+
+async function apiGet(action, params = {}) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const res = await fetch(`${API}?${qs}`);
+  const json = await parseResponseJson(res, '接口请求失败');
+  return json.data;
+}
+
+async function apiPost(action, body) {
+  const res  = await fetch(`${API}?action=${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await parseResponseJson(res, '接口请求失败');
+  return json.data;
+}
+
+async function appApiGet(action) {
+  const res = await fetch(`${APP_API}?action=${action}`);
+  const json = await parseResponseJson(res, '请求失败');
+  return json.data;
+}
+
+async function appApiPost(action, body) {
+  const res = await fetch(`${APP_API}?action=${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json = await parseResponseJson(res, '提交失败');
+  return json.data;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════════════ */
+const Modal = {
+  open(title, body, footer = '') {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML   = body;
+    document.getElementById('modalFooter').innerHTML = footer;
+    document.getElementById('modalOverlay').classList.add('open');
+  },
+  primaryButton() {
+    return document.querySelector('#modalFooter .btn-primary, #modalFooter .btn-danger');
+  },
+  close() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════ */
+const Nav = {
+  go(viewId) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const navEl = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+    if (navEl) navEl.classList.add('active');
+
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const view = document.getElementById(`view-${viewId}`);
+    if (view) view.classList.add('active');
+
+    const titles = {
+      dashboard: '仪表盘', courses: '我的课程',
+      grades: '成绩管理', exams: '考试管理',
+      schedule: '课程表',
+      applications: '课程管理',
+      profile: '个人设置', 'section-detail': '班级详情',
+      announcements: '课程公告',
+      attendance: '考勤管理',
+      'batch-import': '批量成绩上传',
+      workload: '工作量报告',
+    };
+    document.getElementById('pageTitle').textContent = titles[viewId] || '教师门户';
+
+    if (viewId === 'courses')       Courses.load();
+    if (viewId === 'grades')        Grades.init();
+    if (viewId === 'exams')         Exams.init();
+    if (viewId === 'schedule')      Schedule.load();
+    if (viewId === 'profile')       Profile.load();
+    if (viewId === 'applications')  Applications.load();
+    if (viewId === 'announcements') Announcements.load();
+    if (viewId === 'attendance')    Attendance.init();
+    if (viewId === 'batch-import')  BatchImport.init();
+    if (viewId === 'workload')      Workload.init();
+  },
+};
+
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => Nav.go(el.dataset.view));
+});
+document.getElementById('backFromDetail').addEventListener('click', () => Nav.go('courses'));
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+function gradeClass(g) {
+  if (!g) return 'grade-NA';
+  if (g.startsWith('A')) return 'grade-A';
+  if (g.startsWith('B')) return 'grade-B';
+  if (g.startsWith('C')) return 'grade-C';
+  if (g === 'D')         return 'grade-D';
+  if (g === 'F')         return 'grade-F';
+  return 'grade-NA';
+}
+
+function scoreCls(s) {
+  if (!s) return '';
+  if (s >= 85) return 'score-high';
+  if (s >= 70) return 'score-mid';
+  return 'score-low';
+}
+
+function avatarEl(name, img, size = 30) {
+  if (img) {
+    let src = String(img);
+    // If not absolute URL or protocol-relative and not data:, ensure leading '/'
+    if (!src.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//) && !src.startsWith('/') && !src.startsWith('data:') && !src.startsWith('//')) {
+      src = '/' + src;
+    }
+    const alt = (name || '').replace(/"/g, '&quot;');
+    return `<div class="mini-avatar" style="width:${size}px;height:${size}px"><img src="${src}" alt="${alt}" loading="lazy" onerror="this.onerror=null;this.src='${window.teacherGetDefaultAvatarUrl()}'"></div>`;
+  }
+  const initials = (name || '').split(' ').map(w => (w||'')[0]).join('').toUpperCase().slice(0,2);
+  return `<div class="mini-avatar" style="width:${size}px;height:${size}px;font-size:${size*0.37}px">${initials}</div>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function scoreDisplay(v) {
+  if (v === null || v === undefined || v === '') return '<span style="color:var(--text-ter)">—</span>';
+  return `<span class="score-chip ${scoreCls(+v)}">${(+v).toFixed(1)}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════ */
+const Dashboard = {
+  async load() {
+    try {
+      const data = await apiGet('get_dashboard');
+      const { stats, sections } = data;
+
+      document.getElementById('stat-sections').textContent = stats.total_sections ?? '0';
+      document.getElementById('stat-students').textContent = stats.total_students ?? '0';
+      document.getElementById('stat-exams').textContent    = stats.total_exams    ?? '0';
+      document.getElementById('stat-avg').textContent      = stats.overall_avg ? stats.overall_avg + '' : '—';
+
+      State.ungradedCount = +stats.ungraded_count || 0;
+      const badge = document.getElementById('ungradedBadge');
+      if (State.ungradedCount > 0) {
+        badge.textContent = State.ungradedCount;
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+
+      State.sections = sections;
+      const tbody = document.getElementById('dashSectionsBody');
+      if (!sections.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">暂无班级数据</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = sections.map(s => `
+        <tr style="cursor:pointer" onclick="Courses.openSection(${s.section_id})">
+          <td>
+            <div style="font-weight:600">${s.course_name}</div>
+            <div style="font-size:11px;color:var(--text-sec)">${s.credit} 学分 · ${s.hours} 课时</div>
+          </td>
+          <td>${s.semester} ${s.year}</td>
+          <td>
+            <span style="font-weight:600">${s.enrolled_count}</span>
+            <span style="color:var(--text-ter);font-size:12px"> / ${s.capacity}</span>
+          </td>
+          <td>${scoreDisplay(s.section_avg_score)}</td>
+          <td>${s.ungraded_count > 0
+            ? `<span style="color:var(--red);font-weight:600">${s.ungraded_count}</span>`
+            : `<span style="color:var(--green)">✓</span>`}
+          </td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Courses.openSection(${s.section_id})">
+              管理 →
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  }
+};
+
+/* ═══════════════════════════════════════════════════════
+   COURSES
+═══════════════════════════════════════════════════════ */
+const Courses = {
+  async load() {
+    const grid = document.getElementById('coursesGrid');
+    grid.innerHTML = '<div class="spinner" style="grid-column:1/-1"></div>';
+    try {
+      const sections = await apiGet('get_sections');
+      State.sections = sections;
+      if (!sections.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📚</div>暂无分配的课程</div>';
+        return;
+      }
+      grid.innerHTML = sections.map(s => {
+        const pct = s.capacity > 0 ? Math.round(s.enrolled_count / s.capacity * 100) : 0;
+        return `
+        <div class="course-card" onclick="Courses.openSection(${s.section_id})">
+          ${s.ungraded_count > 0 ? `<div class="ungraded-badge">${s.ungraded_count} 待评</div>` : ''}
+          <div class="course-card-name">${s.course_name}</div>
+          <div class="course-card-sem">${s.semester} ${s.year}</div>
+          <div class="course-card-meta">
+            <div class="course-meta-item">🎓 ${s.enrolled_count}/${s.capacity}</div>
+            <div class="course-meta-item">⭐ ${s.credit} cr</div>
+            <div class="course-meta-item">📊 ${s.section_avg_score ? s.section_avg_score : '暂无'}</div>
+            <div class="course-meta-item">📋 ${s.exam_count} exams</div>
+          </div>
+          <div class="course-progress">
+            <div class="course-progress-fill" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async openSection(sectionId) {
+    State.currentSectionId = sectionId;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-section-detail').classList.add('active');
+    document.getElementById('pageTitle').textContent = '班级详情';
+
+    const content = document.getElementById('sectionDetailContent');
+    content.innerHTML = '<div class="spinner"></div>';
+
+    try {
+      const section = State.sections.find(s => s.section_id == sectionId) || {};
+      const students = await apiGet('get_section_students', { section_id: sectionId });
+      State.currentSectionStudents = students;
+
+      const pct = section.capacity > 0 ? Math.round(section.enrolled_count / section.capacity * 100) : 0;
+
+      content.innerHTML = `
+        <div class="section-hero">
+          <div>
+            <div class="section-hero-title">${section.course_name || 'Section'}</div>
+            <div class="section-hero-meta">${section.semester || ''} ${section.year || ''} · ${section.credit || ''} 学分 · ${section.hours || ''} 课时</div>
+            ${section.description ? `<div class="section-hero-desc">${section.description}</div>` : ''}
+          </div>
+          <div class="section-hero-chips">
+            <div class="hero-chip">🎓 ${section.enrolled_count || 0} / ${section.capacity || '?'}</div>
+            <div class="hero-chip">📊 ${section.section_avg_score ? section.section_avg_score : '暂无成绩'}</div>
+            <div class="hero-chip">${pct}% 满员</div>
+          </div>
+        </div>
+
+        <div class="view-header section-detail-toolbar">
+          <div style="font-size:15px;font-weight:700;color:var(--text)">已选课学生</div>
+          <div class="section-detail-actions">
+            <button class="btn btn-secondary btn-sm" onclick="Courses.openSection(${sectionId})">🔄 Refresh</button>
+            <button class="btn btn-primary btn-sm" onclick="ExamModal.openForSection(${sectionId})">+ Add Exam</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>学生</th><th>院系</th>
+                  <th>测验均分</th><th>期中</th><th>期末</th>
+                  <th>加权均分</th><th>建议等级</th>
+                  <th>等级成绩</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${students.length ? students.map(st => this._studentRow(st, sectionId)).join('') : `
+                  <tr><td colspan="9">
+                    <div class="empty-state"><div class="empty-icon">👥</div>暂无学生选课</div>
+                  </td></tr>
+                `}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    } catch(e) {
+      content.innerHTML = `<div class="empty-state">${e.message}</div>`;
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  _studentRow(st, sectionId) {
+    const letterGrade = st.letter_grade;
+    const gradePill = letterGrade
+      ? `<span class="grade-pill ${gradeClass(letterGrade)}">${letterGrade}</span>`
+      : `<span class="grade-pill grade-NA">—</span>`;
+
+    return `<tr>
+      <td>
+        <div class="student-cell">
+          ${avatarEl(st.name, st.avatar_url)}
+          <div>
+            <div class="student-name">${st.name}</div>
+            <div class="student-id">${st.student_no} · ${st.student_grade_year || ''}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text-sec)">${st.dept_name}</td>
+      <td>${scoreDisplay(st.quiz_avg)}</td>
+      <td>${scoreDisplay(st.midterm_score)}</td>
+      <td>${scoreDisplay(st.final_score)}</td>
+      <td><strong>${scoreDisplay(st.weighted_avg)}</strong></td>
+      <td>${st.suggested_grade
+        ? `<span class="grade-pill ${gradeClass(st.suggested_grade)}">${st.suggested_grade}</span>`
+        : '<span style="color:var(--text-ter)">—</span>'}</td>
+      <td id="gradeCell-${st.user_id}-${sectionId}">${gradePill}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" title="编辑成绩"
+            onclick="Grades.editGrade(${st.user_id}, ${sectionId}, '${letterGrade || ''}', this)">✏️</button>
+          <button class="btn btn-ghost btn-sm" title="添加考试"
+            onclick="ExamModal.openForStudent(${sectionId}, ${st.user_id}, '${st.name}')">📝</button>
+        </div>
+      </td>
+    </tr>`;
+  }
+};
+
+/* ═══════════════════════════════════════════════════════
+   GRADES
+═══════════════════════════════════════════════════════ */
+const Grades = {
+  async init() {
+    const sel = document.getElementById('gradesSection');
+    if (sel.options.length <= 1) {
+      const sections = State.sections.length ? State.sections : await apiGet('get_sections');
+      State.sections = sections;
+      sections.forEach(s => {
+        const o = new Option(`${s.course_name} (${s.semester} ${s.year})`, s.section_id);
+        sel.appendChild(o);
+      });
+    }
+    document.getElementById('gradesEmpty').style.display  = 'block';
+    document.getElementById('gradesCard').style.display   = 'none';
+    document.getElementById('autoAssignBtn').style.display = 'none';
+
+    sel.onchange = () => {
+      if (sel.value) this.loadSection(+sel.value);
+      else {
+        document.getElementById('gradesCard').style.display  = 'none';
+        document.getElementById('gradesEmpty').style.display = 'block';
+        document.getElementById('autoAssignBtn').style.display = 'none';
+      }
+    };
+
+    this._loadPending();
+  },
+
+  async _loadPending() {
+    const card = document.getElementById('pendingExamsCard');
+    const list = document.getElementById('pendingExamsList');
+    try {
+      const pending = await apiGet('get_pending_exams');
+      if (!pending.length) { card.style.display = 'none'; return; }
+      card.style.display = '';
+      list.innerHTML = pending.map(p => {
+        const unscored = p.enrolled_count - p.scored_count;
+        const pct = p.enrolled_count ? Math.round(p.scored_count / p.enrolled_count * 100) : 0;
+        return `
+        <div class="pending-task-card">
+          <div class="pending-task-row">
+            <div class="pending-task-main">
+              <div class="pending-task-title">
+                ${escHtml(p.course_name)}
+                <span class="exam-badge exam-${p.exam_type}" style="margin-left:6px">${TYPE_LABEL[p.exam_type]||p.exam_type}</span>
+                <span class="pending-task-date">${p.exam_date}</span>
+              </div>
+              <div class="pending-task-meta">
+                ${unscored} 人待录入 · 已完成 ${p.scored_count}/${p.enrolled_count}
+              </div>
+              <div class="pending-task-progress">
+                <div class="pending-task-progress-bar" style="width:${pct}%"></div>
+              </div>
+            </div>
+            <div class="pending-task-actions">
+              <button class="btn btn-primary btn-sm"
+                data-section-id="${p.section_id}"
+                data-course="${escHtml(p.course_name)}"
+                data-type="${escHtml(p.exam_type)}"
+                data-date="${escHtml(p.exam_date)}"
+                onclick="ExamEntry.open(+this.dataset.sectionId,this.dataset.course,this.dataset.type,this.dataset.date)">
+                ✏️ 逐个录入
+              </button>
+              <button class="btn btn-secondary btn-sm"
+                data-section-id="${p.section_id}"
+                data-type="${escHtml(p.exam_type)}"
+                data-date="${escHtml(p.exam_date)}"
+                onclick="BatchImport.initFromPending(+this.dataset.sectionId,this.dataset.type,this.dataset.date)">
+                📋 批量上传
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      card.style.display = 'none';
+    }
+  },
+
+  async loadSection(sectionId) {
+    State.currentSectionId = sectionId;
+    document.getElementById('gradesCard').style.display   = 'block';
+    document.getElementById('gradesEmpty').style.display  = 'none';
+    document.getElementById('autoAssignBtn').style.display = '';
+    document.getElementById('gradesBody').innerHTML = '<tr><td colspan="8"><div class="spinner"></div></td></tr>';
+
+    try {
+      const students = await apiGet('get_section_students', { section_id: sectionId });
+      State.currentSectionStudents = students;
+
+      const sec = State.sections.find(s => s.section_id == sectionId);
+      document.getElementById('gradesSectionTitle').textContent = sec ? sec.course_name : 'Students';
+      document.getElementById('gradesCount').textContent = `共 ${students.length} 名学生`;
+
+      document.getElementById('gradesBody').innerHTML = students.map(st => `
+        <tr>
+          <td>
+            <div class="student-cell">
+              ${avatarEl(st.name, st.avatar_url)}
+              <div>
+                <div class="student-name">${st.name}</div>
+                <div class="student-id">${st.student_no}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--text-sec)">${st.dept_name}</td>
+          <td>${scoreDisplay(st.quiz_avg)}</td>
+          <td>${scoreDisplay(st.midterm_score)}</td>
+          <td>${scoreDisplay(st.final_score)}</td>
+          <td><strong>${scoreDisplay(st.weighted_avg)}</strong></td>
+          <td>
+            ${st.suggested_grade
+              ? `<span class="grade-pill ${gradeClass(st.suggested_grade)}">${st.suggested_grade}</span>`
+              : '<span style="color:var(--text-ter)">—</span>'}
+          </td>
+          <td id="gradeCell-${st.user_id}-${sectionId}">
+            <div style="display:flex;align-items:center;gap:6px">
+              ${st.letter_grade
+                ? `<span class="grade-pill ${gradeClass(st.letter_grade)}">${st.letter_grade}</span>`
+                : `<span class="grade-pill grade-NA">—</span>`}
+              <button class="btn btn-ghost btn-sm" onclick="Grades.editGrade(${st.user_id},${sectionId},'${st.letter_grade||''}',this)">✏️</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="8"><div class="empty-state">暂无学生名单</div></td></tr>';
+
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  editGrade(studentId, sectionId, currentGrade, btn) {
+    const cellId = `gradeCell-${studentId}-${sectionId}`;
+    const cell = document.getElementById(cellId);
+
+    // Find the cell differently if in section-detail view
+    const allCells = document.querySelectorAll(`[id^="gradeCell-${studentId}-${sectionId}"]`);
+    const targetCell = allCells[0] || btn.closest('td');
+
+    const grades = ['A','A-','B+','B','B-','C+','C','C-','D','F',''];
+    const originalHtml = targetCell.innerHTML;
+
+    targetCell.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px">
+        <select class="form-select inline-edit" id="gradeSelect-${studentId}" style="width:100px;font-size:12px">
+          ${grades.map(g => `<option value="${g}" ${g === currentGrade ? 'selected' : ''}>${g || '— (清除)'}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" style="padding:4px 8px" onclick="Grades.saveGrade(${studentId},${sectionId})">✓</button>
+        <button class="btn btn-secondary btn-sm" style="padding:4px 8px" id="cancelGrade-${studentId}">✕</button>
+      </div>
+    `;
+
+    document.getElementById(`cancelGrade-${studentId}`).onclick = () => {
+      targetCell.innerHTML = originalHtml;
+    };
+  },
+
+  async saveGrade(studentId, sectionId) {
+    const sel   = document.getElementById(`gradeSelect-${studentId}`);
+    const grade = sel ? sel.value : '';
+    try {
+      await apiPost('update_letter_grade', { student_id: studentId, section_id: sectionId, grade });
+      Toast.show('成绩保存成功');
+      if (State.currentSectionId) this.loadSection(State.currentSectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async autoAssign() {
+    const sectionId = State.currentSectionId || +document.getElementById('gradesSection').value;
+    if (!sectionId) { Toast.show('请先选择班级', 'warn'); return; }
+
+    Modal.open(
+      '✨ 自动分配成绩',
+      `<p style="color:var(--text-sec);font-size:14px;line-height:1.6">
+        将根据加权平均分（期末50% · 期中30% · 测验20%）<br>自动为所有有成绩的学生分配等级。<br><br><strong>已有等级将被覆盖。</strong>
+      </p>`,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Grades._doAutoAssign(${sectionId})">Confirm Auto-Assign</button>`
+    );
+  },
+
+  async _doAutoAssign(sectionId) {
+    Modal.close();
+    try {
+      const res = await apiPost('auto_assign_grades', { section_id: sectionId });
+      Toast.show(`已自动分配 ${res.updated} 条成绩`);
+      await this.loadSection(sectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   EXAMS
+═══════════════════════════════════════════════════════ */
+const Exams = {
+  async init() {
+    const sel = document.getElementById('examsSection');
+    if (sel.options.length <= 1) {
+      const sections = State.sections.length ? State.sections : await apiGet('get_sections');
+      State.sections = sections;
+      sections.forEach(s => {
+        const o = new Option(`${s.course_name} (${s.semester} ${s.year})`, s.section_id);
+        sel.appendChild(o);
+      });
+    }
+
+    document.getElementById('examsEmpty').style.display      = 'block';
+    document.getElementById('examsCard').style.display       = 'none';
+    document.getElementById('examEventsCard').style.display  = 'none';
+    document.getElementById('publishExamBtn').style.display  = 'none';
+
+    sel.onchange = () => {
+      if (sel.value) this.loadSection(+sel.value);
+      else {
+        document.getElementById('examsCard').style.display       = 'none';
+        document.getElementById('examEventsCard').style.display  = 'none';
+        document.getElementById('examsEmpty').style.display      = 'block';
+        document.getElementById('publishExamBtn').style.display  = 'none';
+      }
+    };
+
+    document.getElementById('examsTypeFilter').onchange = () => {
+      if (sel.value) this.loadSection(+sel.value);
+    };
+  },
+
+  async loadSection(sectionId) {
+    State.currentSectionId = sectionId;
+    document.getElementById('examsCard').style.display       = 'block';
+    document.getElementById('examsEmpty').style.display      = 'none';
+    document.getElementById('publishExamBtn').style.display  = '';
+    document.getElementById('examsBody').innerHTML = '<tr><td colspan="6"><div class="spinner"></div></td></tr>';
+
+    ExamEvents.load(sectionId);
+
+    try {
+      // Also load students for the Add Exam modal
+      const [exams, students] = await Promise.all([
+        apiGet('get_section_exams', { section_id: sectionId }),
+        apiGet('get_section_students', { section_id: sectionId }),
+      ]);
+      State.currentExams           = exams;
+      State.currentSectionStudents = students;
+
+      const typeFilter = document.getElementById('examsTypeFilter').value;
+      const filtered   = typeFilter ? exams.filter(e => e.exam_type === typeFilter) : exams;
+
+      const sec = State.sections.find(s => s.section_id == sectionId);
+      document.getElementById('examsSectionTitle').textContent = sec ? sec.course_name : 'Exams';
+      document.getElementById('examsCount').textContent = `共 ${filtered.length} 条记录`;
+
+      document.getElementById('examsBody').innerHTML = filtered.length ? filtered.map(e => `
+        <tr>
+          <td>
+            <div class="student-cell">
+              ${avatarEl(e.student_name, e.student_image ? window.teacherBuildAvatarUrl(e.student_image) : null)}
+              <div>
+                <div class="student-name">${e.student_name}</div>
+                <div class="student-id">${e.student_no}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="exam-badge exam-${e.exam_type}">${e.exam_type}</span></td>
+          <td style="font-size:12px;color:var(--text-sec)">${fmtDate(e.exam_date)}</td>
+          <td>${scoreDisplay(e.score)}</td>
+          <td>
+            ${e.computed_grade
+              ? `<span class="grade-pill ${gradeClass(e.computed_grade)}">${e.computed_grade}</span>`
+              : '<span style="color:var(--text-ter)">—</span>'}
+          </td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-ghost btn-sm" title="编辑成绩"
+                onclick="Exams.editScore(${e.exam_id}, ${e.score || 0}, this)">✏️</button>
+              <button class="btn btn-danger btn-sm" title="删除"
+                onclick="Exams.deleteExam(${e.exam_id})">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="6">
+        <div class="empty-state">
+          <div class="empty-icon">📊</div>
+          暂无${typeFilter ? `「${typeFilter}」类型的` : ''}考试记录
+        </div>
+      </td></tr>`;
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  editScore(examId, currentScore, btn) {
+    const row = btn.closest('tr');
+    const td  = row.querySelector('td:nth-child(4)');
+    td.innerHTML = `
+      <div style="display:flex;gap:4px;align-items:center">
+        <input type="number" class="form-input inline-edit" id="scoreInput-${examId}"
+          value="${currentScore}" min="0" max="100" step="0.5" style="width:80px">
+        <button class="btn btn-primary btn-sm" onclick="Exams.saveScore(${examId})">✓</button>
+        <button class="btn btn-secondary btn-sm" onclick="Exams.loadSection(${State.currentSectionId})">✕</button>
+      </div>
+    `;
+  },
+
+  async saveScore(examId) {
+    const inp   = document.getElementById(`scoreInput-${examId}`);
+    const score = inp ? +inp.value : null;
+    if (score === null || score < 0 || score > 100) { Toast.show('成绩必须在0–100之间', 'warn'); return; }
+
+    try {
+      await apiPost('update_exam', { exam_id: examId, score });
+      Toast.show('成绩已更新');
+      await this.loadSection(State.currentSectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async deleteExam(examId) {
+    Modal.open(
+      '删除考试记录',
+      '<p style="color:var(--text-sec)">确定要删除此考试记录吗？此操作无法撤销。</p>',
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-danger" onclick="Exams._doDelete(${examId})">删除</button>`
+    );
+  },
+
+  async _doDelete(examId) {
+    Modal.close();
+    try {
+      await apiPost('delete_exam', { exam_id: examId });
+      Toast.show('考试记录已删除');
+      await this.loadSection(State.currentSectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   EXAM EVENTS — publish / list / cancel
+═══════════════════════════════════════════════════════ */
+const TYPE_LABEL = { final: '期末', midterm: '期中', quiz: '测验' };
+
+const ExamEvents = {
+  async load(sectionId) {
+    const card = document.getElementById('examEventsCard');
+    const body = document.getElementById('examEventsBody');
+    card.style.display = '';
+    body.innerHTML = '<div class="panel-loading"><div class="spinner"></div></div>';
+
+    try {
+      const events = await apiGet('get_exam_events', { section_id: sectionId });
+      const sec    = State.sections.find(s => s.section_id == sectionId);
+      const courseName = sec?.course_name || '';
+
+      if (!events.length) {
+        body.innerHTML = '<div style="padding:14px 16px;color:var(--text-ter);font-size:13px;text-align:center">暂无已发布考试 — 点击右上角「发布考试」开始</div>';
+        return;
+      }
+
+      body.innerHTML = `<div class="table-wrap"><table>
+        <thead><tr>
+          <th>考试类型</th><th>考试日期</th><th>录入进度</th><th>操作</th>
+        </tr></thead><tbody>
+        ${events.map(ev => {
+          const pct  = ev.enrolled_count ? Math.round(ev.scored_count / ev.enrolled_count * 100) : 0;
+          const done = ev.scored_count >= ev.enrolled_count && ev.enrolled_count > 0;
+          const color = done ? 'var(--green,#10b981)' : 'var(--primary)';
+          return `<tr>
+            <td><span class="exam-badge exam-${ev.exam_type}">${TYPE_LABEL[ev.exam_type]||ev.exam_type}</span></td>
+            <td style="font-size:12px">${ev.exam_date}</td>
+            <td class="event-progress-cell">
+              <div class="progress-inline">
+                <div class="progress-track">
+                  <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+                </div>
+                <span class="progress-label" style="color:${color}">
+                  ${ev.scored_count}/${ev.enrolled_count}${done?' ✓':''}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="event-actions">
+                ${!done ? `<button class="btn btn-primary btn-sm"
+                  data-section-id="${sectionId}"
+                  data-course="${escHtml(courseName)}"
+                  data-type="${escHtml(ev.exam_type)}"
+                  data-date="${escHtml(ev.exam_date)}"
+                  onclick="ExamEntry.open(+this.dataset.sectionId,this.dataset.course,this.dataset.type,this.dataset.date)">
+                  ✏️ 录入成绩</button>` : ''}
+                <button class="btn btn-danger btn-sm"
+                  data-section-id="${sectionId}"
+                  data-type="${escHtml(ev.exam_type)}"
+                  data-date="${escHtml(ev.exam_date)}"
+                  onclick="ExamEvents.cancel(+this.dataset.sectionId,this.dataset.type,this.dataset.date)">🗑 取消</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody></table></div>`;
+    } catch(e) {
+      body.innerHTML = `<div style="padding:14px;color:var(--red);font-size:13px">加载失败：${escHtml(e.message)}</div>`;
+    }
+  },
+
+  openPublishModal() {
+    const sectionId = State.currentSectionId;
+    if (!sectionId) { Toast.show('请先选择班级', 'warn'); return; }
+    const sec = State.sections.find(s => s.section_id == sectionId);
+    Modal.open('📋 发布考试', `
+      <div class="form-group">
+        <label class="form-label">班级</label>
+        <input type="text" class="form-input" value="${escHtml(sec ? sec.course_name+' ('+sec.semester+' '+sec.year+')' : '')}" disabled>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">考试类型</label>
+          <select class="form-select" id="peType">
+            <option value="final">期末考试</option>
+            <option value="midterm">期中考试</option>
+            <option value="quiz">随堂测验</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">考试日期</label>
+          <input type="date" class="form-input" id="peDate" value="${new Date().toISOString().slice(0,10)}">
+        </div>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="ExamEvents._submitPublish(${sectionId})">发布考试</button>`
+    );
+  },
+
+  async _submitPublish(sectionId) {
+    const submitBtn = Modal.primaryButton();
+    const exam_type = document.getElementById('peType').value;
+    const exam_date = document.getElementById('peDate').value;
+    if (!exam_date) { Toast.show('请选择考试日期', 'warn'); return; }
+    setBusyState(submitBtn, true, '发布中...');
+    try {
+      await apiPost('publish_exam', { section_id: sectionId, exam_type, exam_date });
+      Modal.close();
+      Toast.show('考试已发布');
+      await ExamEvents.load(sectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    } finally {
+      setBusyState(submitBtn, false);
+    }
+  },
+
+  cancel(sectionId, examType, examDate) {
+    Modal.open(
+      '取消考试',
+      '<p style="color:var(--text-sec);font-size:14px">确定要取消此考试吗？<br>已录入的成绩记录不会被删除。</p>',
+      `<button class="btn btn-secondary" onclick="Modal.close()">返回</button>
+       <button class="btn btn-danger" onclick="ExamEvents._doCancel(${sectionId},'${examType}','${examDate}')">确认取消</button>`
+    );
+  },
+
+  async _doCancel(sectionId, examType, examDate) {
+    Modal.close();
+    try {
+      await apiPost('cancel_exam_event', { section_id: sectionId, exam_type: examType, exam_date: examDate });
+      Toast.show('考试已取消');
+      await ExamEvents.load(State.currentSectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   EXAM ENTRY — individual score entry for a pending exam
+═══════════════════════════════════════════════════════ */
+const ExamEntry = {
+  _event: null,
+  _students: [],
+
+  async open(sectionId, courseName, examType, examDate) {
+    this._event = { sectionId, examType, examDate, courseName };
+    try {
+      const students = await apiGet('get_entry_students', { section_id: sectionId, exam_type: examType, exam_date: examDate });
+      this._students = students;
+      const label = TYPE_LABEL[examType] || examType;
+
+      Modal.open(
+        `📝 录入成绩 — ${escHtml(courseName)} ${label} (${examDate})`,
+        `<div style="max-height:420px;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="position:sticky;top:0;background:var(--surface)">
+                <th style="text-align:left;padding:8px 6px;font-size:12px;color:var(--text-sec);font-weight:600">学生</th>
+                <th style="text-align:left;padding:8px 6px;font-size:12px;color:var(--text-sec);font-weight:600">学号</th>
+                <th style="text-align:right;padding:8px 6px;font-size:12px;color:var(--text-sec);font-weight:600">成绩 (0–100)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${students.map(s => `
+              <tr style="border-top:1px solid var(--border)">
+                <td style="padding:8px 6px;font-size:13px">${escHtml(s.name)}</td>
+                <td style="padding:8px 6px;font-size:12px;color:var(--text-sec)">${escHtml(s.student_no)}</td>
+                <td style="padding:8px 6px;text-align:right">
+                  <input type="number" class="form-input inline-edit"
+                    id="ee-score-${s.user_id}"
+                    value="${s.score ?? ''}"
+                    placeholder="—" min="0" max="100" step="0.5"
+                    style="width:84px;text-align:right">
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`,
+        `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+         <button class="btn btn-primary" onclick="ExamEntry.saveAll()">保存成绩</button>`
+      );
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async saveAll() {
+    const ev = this._event;
+    if (!ev) return;
+
+    const records = this._students
+      .map(s => {
+        const inp = document.getElementById(`ee-score-${s.user_id}`);
+        if (!inp || inp.value.trim() === '') return null;
+        const score = +inp.value;
+        if (isNaN(score) || score < 0 || score > 100) return null;
+        return { student_id: s.user_id, score };
+      })
+      .filter(Boolean);
+
+    if (!records.length) { Toast.show('请至少输入一名学生的成绩', 'warn'); return; }
+
+    Modal.close();
+    try {
+      const res = await apiPost('batch_import_exam', {
+        section_id: ev.sectionId,
+        exam_type:  ev.examType,
+        exam_date:  ev.examDate,
+        records,
+      });
+      Toast.show(res.message);
+      // Refresh both pending list and exam events
+      await Promise.all([
+        Grades._loadPending(),
+        ExamEvents.load(ev.sectionId),
+      ]).catch(() => {});
+      if (State.currentSectionId === ev.sectionId) Exams.loadSection(ev.sectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   EXAM MODAL (Add Exam — used from section-detail view)
+═══════════════════════════════════════════════════════ */
+const ExamModal = {
+  open() {
+    const sectionId = State.currentSectionId;
+    if (!sectionId) { Toast.show('请先选择班级', 'warn'); return; }
+    this.openForSection(sectionId);
+  },
+
+  openForSection(sectionId, preStudentId = null, preStudentName = null) {
+    State.currentSectionId = sectionId;
+    const overlay = document.getElementById('examModalOverlay');
+    document.getElementById('examModalTitle').textContent = preStudentName
+      ? `添加考试 — ${preStudentName}`
+      : '添加考试记录';
+    document.getElementById('emExamId').value = '';
+    document.getElementById('emScore').value  = '';
+    document.getElementById('emDate').value   = new Date().toISOString().slice(0,10);
+    document.getElementById('emType').value   = 'final';
+
+    // Populate student dropdown
+    const sel = document.getElementById('emStudent');
+    sel.innerHTML = '<option value="">— 选择学生 —</option>';
+    State.currentSectionStudents.forEach(s => {
+      const o = new Option(`${s.name} (${s.student_no})`, s.user_id);
+      if (preStudentId && s.user_id == preStudentId) o.selected = true;
+      sel.appendChild(o);
+    });
+
+    overlay.classList.add('open');
+  },
+
+  openForStudent(sectionId, studentId, studentName) {
+    // Load students if not already for this section
+    if (State.currentSectionId !== sectionId || !State.currentSectionStudents.length) {
+      apiGet('get_section_students', { section_id: sectionId }).then(students => {
+        State.currentSectionStudents = students;
+        State.currentSectionId = sectionId;
+        this.openForSection(sectionId, studentId, studentName);
+      });
+    } else {
+      this.openForSection(sectionId, studentId, studentName);
+    }
+  },
+
+  close() {
+    document.getElementById('examModalOverlay').classList.remove('open');
+  },
+
+  async save() {
+    const saveBtn = document.getElementById('examModalSaveBtn');
+    const studentId = +document.getElementById('emStudent').value;
+    const examType  = document.getElementById('emType').value;
+    const score     = document.getElementById('emScore').value;
+    const examDate  = document.getElementById('emDate').value;
+
+    if (!studentId)  { Toast.show('请选择学生', 'warn'); return; }
+    if (!score)      { Toast.show('请输入成绩', 'warn'); return; }
+    if (!examDate)   { Toast.show('请选择考试日期', 'warn'); return; }
+    if (+score < 0 || +score > 100) { Toast.show('成绩必须在0–100之间', 'warn'); return; }
+
+    setBusyState(saveBtn, true, '保存中...');
+    try {
+      await apiPost('save_exam', {
+        student_id: studentId,
+        section_id: State.currentSectionId,
+        exam_type:  examType,
+        score:      +score,
+        exam_date:  examDate,
+      });
+      Toast.show('考试记录已保存');
+      this.close();
+
+      // Refresh whatever view is active
+      const activeView = document.querySelector('.view.active');
+      if (activeView?.id === 'view-exams')     Exams.loadSection(State.currentSectionId);
+      if (activeView?.id === 'view-grades')    Grades.loadSection(State.currentSectionId);
+      if (activeView?.id === 'view-section-detail') Courses.openSection(State.currentSectionId);
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    } finally {
+      setBusyState(saveBtn, false);
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════════════════════ */
+const Profile = {
+  renderBoot() {
+    this._renderBootIdentity();
+  },
+
+  async load() {
+    try {
+      const p = await apiGet('get_profile');
+      State.profile = p;
+      this._render(p);
+    } catch(e) {
+      this._renderBootIdentity();
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  _render(p) {
+    const boot = teacherBootIdentity();
+    const name = p.name || boot.user_name || boot.user_email || '教师用户';
+    const title = p.title || '教师';
+    const deptName = p.dept_name || '';
+    const deptCode = p.dept_code || '';
+    const sidebarRole = deptCode ? `${title} · ${deptCode}` : title;
+    const email = p.email || boot.user_email || '—';
+    const deptText = deptName
+      ? `${deptName}${deptCode ? ` (${deptCode})` : ''}`
+      : '未设置院系';
+
+    // Sidebar
+    document.getElementById('sidebarName').textContent = name;
+    document.getElementById('sidebarRole').textContent = sidebarRole;
+
+    // Sidebar avatar
+    const sa = document.getElementById('sidebarAvatar');
+    if (p.avatar_url) {
+      sa.innerHTML = `<img src="${p.avatar_url}" alt="${name}">`;
+    } else {
+      sa.textContent = initialsOf(name);
+    }
+
+    // Profile card
+    const pa = document.getElementById('profileAvatar');
+    if (p.avatar_url) {
+      pa.innerHTML = `<img src="${p.avatar_url}" alt="${name}">`;
+    } else {
+      pa.textContent = initialsOf(name);
+    }
+    document.getElementById('profileName').textContent   = name;
+    document.getElementById('profileTitle').textContent  = title;
+    document.getElementById('profileEmail').textContent  = email;
+    document.getElementById('profileDept').textContent   = deptText;
+    document.getElementById('profileJoined').textContent = fmtDate(p.created_at);
+
+    // Form
+    document.getElementById('editName').value   = name;
+    document.getElementById('editPhone').value  = p.phone || '';
+    document.getElementById('editGender').value = p.gender || 'other';
+
+    // Titlebar
+    document.getElementById('titlebarInfo').textContent = deptName || title;
+    document.getElementById('dashGreeting').textContent = `${getTimeOfDay()}，${name} 👋`;
+  },
+
+  _renderBootIdentity() {
+    const boot = teacherBootIdentity();
+    const name = boot.user_name || boot.user_email || '教师用户';
+    const title = boot.title || '教师';
+    const deptName = boot.dept_name || '';
+    const deptCode = boot.dept_code || '';
+    const roleText = deptCode ? `${title} · ${deptCode}` : title;
+    const deptText = deptName
+      ? `${deptName}${deptCode ? ` (${deptCode})` : ''}`
+      : '未设置院系';
+    const avatarUrl = boot.avatar_url || '';
+    const sidebarAvatar = document.getElementById('sidebarAvatar');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const avatarAlt = escHtml(name);
+    const avatarInitials = escHtml(initialsOf(name));
+
+    document.getElementById('sidebarName').textContent = name;
+    document.getElementById('sidebarRole').textContent = roleText;
+    if (avatarUrl) {
+      sidebarAvatar.innerHTML = `<img src="${avatarUrl}" alt="${avatarAlt}" onerror="this.parentNode.textContent='${avatarInitials}'">`;
+      profileAvatar.innerHTML = `<img src="${avatarUrl}" alt="${avatarAlt}" onerror="this.parentNode.textContent='${avatarInitials}'">`;
+    } else {
+      sidebarAvatar.textContent = initialsOf(name);
+      profileAvatar.textContent = initialsOf(name);
+    }
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('profileTitle').textContent = title;
+    document.getElementById('profileEmail').textContent = boot.user_email || '—';
+    document.getElementById('profileDept').textContent = deptText;
+    document.getElementById('profileJoined').textContent = '—';
+    document.getElementById('editName').value = name;
+    document.getElementById('editPhone').value = '';
+    document.getElementById('editGender').value = 'other';
+    document.getElementById('titlebarInfo').textContent = deptName || title;
+    document.getElementById('dashGreeting').textContent = `${getTimeOfDay()}，${name} 👋`;
+  },
+
+  async save() {
+    const name   = document.getElementById('editName').value.trim();
+    const phone  = document.getElementById('editPhone').value.trim();
+    const gender = document.getElementById('editGender').value;
+
+    if (!name) { Toast.show('请输入姓名', 'warn'); return; }
+    if (phone && !/^\d{11}$/.test(phone)) { Toast.show('手机号必须为11位数字', 'warn'); return; }
+    try {
+      await apiPost('update_profile', { name, phone, gender });
+      Toast.show('个人信息已更新');
+      await this.load();
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  _pendingFile: null,
+
+  previewAvatar(input) {
+    const file = input.files[0];
+    input.value = '';
+    if (!file) return;
+    const avatarConfig = window.teacherGetAvatarConfig();
+    const maxSize = Number(avatarConfig.max_size || 0);
+    if (maxSize > 0 && file.size > maxSize) {
+      const maxSizeMb = (maxSize / 1024 / 1024).toFixed(maxSize % (1024 * 1024) === 0 ? 0 : 1);
+      Toast.show(`文件过大（最大 ${maxSizeMb}MB）`, 'warn');
+      return;
+    }
+    this._pendingFile = file;
+    const url = URL.createObjectURL(file);
+    Modal.open('📷 更换头像', `
+      <div style="text-align:center;padding:8px 0">
+        <img src="${url}" alt="预览"
+          style="max-width:180px;max-height:180px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">
+        <div style="margin-top:12px;font-size:13px;color:var(--text-sec)">${escHtml(file.name)} (${(file.size/1024).toFixed(1)} KB)</div>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Profile._doUpload()">确认上传</button>`
+    );
+  },
+
+  async _doUpload() {
+    const file = this._pendingFile;
+    if (!file) return;
+    Modal.close();
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res  = await fetch(`${API}?action=upload_avatar`, { method: 'POST', body: formData });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      Toast.show('头像已更新！');
+      this._pendingFile = null;
+      await this.load();
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async changePassword() {
+    const oldPwd  = document.getElementById('pwdCurrent').value;
+    const newPwd  = document.getElementById('pwdNew').value;
+    const confirm = document.getElementById('pwdConfirm').value;
+    if (!oldPwd)             { Toast.show('请输入当前密码', 'warn'); return; }
+    if (newPwd.length < 6)   { Toast.show('新密码至少需要 6 位', 'warn'); return; }
+    if (newPwd !== confirm)  { Toast.show('两次输入的新密码不一致', 'warn'); return; }
+    try {
+      await apiPost('change_password', { old_password: oldPwd, new_password: newPwd });
+      Toast.show('密码已修改');
+      document.getElementById('pwdCurrent').value = '';
+      document.getElementById('pwdNew').value      = '';
+      document.getElementById('pwdConfirm').value  = '';
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    }
+  },
+};
+
+function getTimeOfDay() {
+  const h = new Date().getHours();
+  if (h < 12) return '早上好';
+  if (h < 17) return '下午好';
+  return '晚上好';
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCHEDULE
+═══════════════════════════════════════════════════════ */
+// Colour palette: cycles by (section_id % 6)
+const TT_COLORS = ['tt-c0','tt-c1','tt-c2','tt-c3','tt-c4','tt-c5'];
+
+// Display window: 08:00 – 21:30
+const TT_START_MIN = 8 * 60;   // 480
+const TT_END_MIN   = 21 * 60 + 30; // 1290
+const TT_TOTAL_MIN = TT_END_MIN - TT_START_MIN; // 810
+const TT_PX_PER_MIN = 1.4;     // pixel height per minute
+const TT_HEIGHT    = TT_TOTAL_MIN * TT_PX_PER_MIN; // total column height
+
+const DAY_NAMES_SHORT = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const DAY_NAMES_LONG  = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+
+const Schedule = {
+  _minWeek: 1,
+  _maxWeek: 16,
+  _currentWeek: 1,
+  _colorMap: {},   // section_id → color index
+  _colorCounter: 0,
+
+  _colorFor(sectionId) {
+    if (this._colorMap[sectionId] === undefined) {
+      this._colorMap[sectionId] = this._colorCounter % TT_COLORS.length;
+      this._colorCounter++;
+    }
+    return TT_COLORS[this._colorMap[sectionId]];
+  },
+
+  async load() {
+    document.getElementById('weekNav').style.display = 'none';
+    document.getElementById('scheduleContent').innerHTML = '<div class="spinner"></div>';
+    this._colorMap = {};
+    this._colorCounter = 0;
+
+    try {
+      // Fetch week range
+      const qs = new URLSearchParams({ action: 'get_week_range' });
+      const res = await fetch(`${SCHEDULE_API}?${qs}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+
+      const { min_week, max_week } = json.data;
+      this._minWeek = min_week;
+      this._maxWeek = max_week;
+
+      // Build week selector
+      const sel = document.getElementById('weekSelect');
+      sel.innerHTML = '';
+      for (let w = min_week; w <= max_week; w++) {
+        const o = new Option(`第${w}周`, w);
+        sel.appendChild(o);
+      }
+
+      // Default to week 1 (or clamp current week)
+      this._currentWeek = Math.min(Math.max(this._currentWeek, min_week), max_week);
+      sel.value = this._currentWeek;
+
+      document.getElementById('weekNav').style.display = '';
+      await this.loadWeek(this._currentWeek, /* skipSelUpdate */ true);
+    } catch(e) {
+      document.getElementById('scheduleContent').innerHTML =
+        `<div class="empty-state"><div class="empty-icon">📅</div>${e.message}</div>`;
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  async loadWeek(week, skipSelUpdate = false) {
+    this._currentWeek = week;
+    if (!skipSelUpdate) {
+      document.getElementById('weekSelect').value = week;
+    }
+
+    // Update prev/next button state
+    document.getElementById('prevWeekBtn').disabled = (week <= this._minWeek);
+    document.getElementById('nextWeekBtn').disabled = (week >= this._maxWeek);
+    document.getElementById('weekRangeInfo').textContent =
+      `（学期第${this._minWeek}–${this._maxWeek}周）`;
+
+    const content = document.getElementById('scheduleContent');
+    content.innerHTML = '<div class="spinner"></div>';
+
+    try {
+      const qs = new URLSearchParams({ action: 'get_weekly_schedule', week });
+      const res = await fetch(`${SCHEDULE_API}?${qs}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+
+      const entries = json.data;
+
+      // Pre-assign colours so legend matches blocks
+      const sections = [];
+      entries.forEach(e => {
+        if (!sections.find(s => s.id === e.section_id)) {
+          sections.push({ id: e.section_id, name: e.course_name, cls: this._colorFor(e.section_id) });
+        }
+      });
+
+      // Build legend
+      const legend = document.getElementById('weekLegend');
+      legend.innerHTML = sections.map(s =>
+        `<div class="legend-item">
+           <div class="legend-dot ${s.cls}"></div>
+           <span>${s.name}</span>
+         </div>`
+      ).join('');
+
+      content.innerHTML = this._buildTimetable(entries);
+    } catch(e) {
+      content.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div>${e.message}</div>`;
+      Toast.show(e.message, 'error');
+    }
+  },
+
+  stepWeek(delta) {
+    const next = Math.min(Math.max(this._currentWeek + delta, this._minWeek), this._maxWeek);
+    if (next !== this._currentWeek) this.loadWeek(next);
+  },
+
+  _buildTimetable(entries) {
+    // Group entries by day
+    const byDay = {};
+    for (let d = 1; d <= 7; d++) byDay[d] = [];
+    entries.forEach(e => {
+      if (byDay[e.day_of_week]) byDay[e.day_of_week].push(e);
+    });
+
+    // Determine active days (always show Mon–Fri; Sat/Sun only if used)
+    const hasWeekend = entries.some(e => e.day_of_week >= 6);
+    const days = hasWeekend ? [1,2,3,4,5,6,7] : [1,2,3,4,5];
+
+    // Hour ticks
+    const hourTicks = [];
+    for (let m = TT_START_MIN; m <= TT_END_MIN; m += 60) {
+      hourTicks.push(m);
+    }
+    const halfTicks = [];
+    for (let m = TT_START_MIN + 30; m < TT_END_MIN; m += 60) {
+      halfTicks.push(m);
+    }
+
+    const gridCols = `54px repeat(${days.length}, minmax(110px, 1fr))`;
+
+    // Build header
+    let html = `<div class="timetable-scroll">
+      <div class="timetable" style="grid-template-columns:${gridCols}">
+        <div class="tt-header-time"></div>`;
+
+    days.forEach(d => {
+      const hasClass = byDay[d].length > 0;
+      html += `<div class="tt-header-day${hasClass ? ' has-class' : ''}">
+        <div class="tt-day-name">${DAY_NAMES_SHORT[d]}</div>
+        <div class="tt-day-sub">${hasClass ? byDay[d].length + ' 节课' : '—'}</div>
+      </div>`;
+    });
+
+    // Build body: time col + each day col
+    // Time gutter
+    let timeColHtml = `<div class="tt-time-col" style="height:${TT_HEIGHT}px">`;
+    hourTicks.forEach(m => {
+      const top = (m - TT_START_MIN) * TT_PX_PER_MIN;
+      const label = `${String(Math.floor(m/60)).padStart(2,'0')}:00`;
+      timeColHtml += `<div class="tt-time-label" style="top:${top}px">${label}</div>`;
+    });
+    timeColHtml += '</div>';
+    html += timeColHtml;
+
+    // Day columns
+    days.forEach(d => {
+      html += `<div class="tt-day-col" style="height:${TT_HEIGHT}px">`;
+
+      // Hour lines (within this column)
+      hourTicks.forEach(m => {
+        const top = (m - TT_START_MIN) * TT_PX_PER_MIN;
+        html += `<div class="tt-hour-line" style="top:${top}px"></div>`;
+      });
+      halfTicks.forEach(m => {
+        const top = (m - TT_START_MIN) * TT_PX_PER_MIN;
+        html += `<div class="tt-hour-line half" style="top:${top}px"></div>`;
+      });
+
+      // Course blocks
+      byDay[d].forEach(e => {
+        const startMin = Math.max(+e.start_minutes, TT_START_MIN);
+        const endMin   = Math.min(+e.end_minutes,   TT_END_MIN);
+        const top    = (startMin - TT_START_MIN) * TT_PX_PER_MIN;
+        const height = Math.max((endMin - startMin) * TT_PX_PER_MIN, 22);
+        const colorCls = this._colorFor(e.section_id);
+        const dataJson = JSON.stringify(e).replace(/"/g, '&quot;');
+
+        html += `<div class="tt-course ${colorCls}"
+          style="top:${top}px;height:${height}px"
+          onclick="Schedule.showDetail(this)"
+          data-entry="${dataJson}">
+          <div class="tt-course-name">${e.course_name}</div>
+          ${height > 36 ? `<div class="tt-course-time">${e.start_time}–${e.end_time}</div>` : ''}
+          ${height > 52 ? `<div class="tt-course-room">📍 ${e.location}</div>` : ''}
+        </div>`;
+      });
+
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+
+    if (entries.length === 0) {
+      html = `<div class="timetable-scroll"><div class="timetable">
+        <div class="tt-empty">
+          <div class="tt-empty-icon">🏖️</div>
+          <div class="tt-empty-text">第${this._currentWeek}周暂无课程安排</div>
+        </div>
+      </div></div>`;
+    }
+
+    return html;
+  },
+
+  showDetail(el) {
+    const e = JSON.parse(el.getAttribute('data-entry').replace(/&quot;/g, '"'));
+    const colorCls = this._colorFor(e.section_id);
+
+    // Build a colour swatch div matching the block
+    const swatch = `<span style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:middle;margin-right:6px" class="${colorCls}"></span>`;
+
+    const body = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        ${swatch}
+        <span style="font-size:18px;font-weight:700;color:var(--text)">${e.course_name}</span>
+        <span class="week-badge">第${this._currentWeek}周</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-sec);margin-bottom:12px">
+        班级 ${e.section_id} · ${e.semester} ${e.year}
+      </div>
+      <div class="detail-grid">
+        <div>
+          <div class="detail-item-label">星期</div>
+          <div class="detail-item-value">${e.day_name}</div>
+        </div>
+        <div>
+          <div class="detail-item-label">时间</div>
+          <div class="detail-item-value">${e.start_time} – ${e.end_time}</div>
+        </div>
+        <div>
+          <div class="detail-item-label">地点</div>
+          <div class="detail-item-value">📍 ${e.location}</div>
+        </div>
+        <div>
+          <div class="detail-item-label">选课人数</div>
+          <div class="detail-item-value">${e.enrolled_count} / ${e.capacity} 人</div>
+        </div>
+        <div>
+          <div class="detail-item-label">学分</div>
+          <div class="detail-item-value">${e.credit} 学分 · ${e.hours} 课时</div>
+        </div>
+        <div>
+          <div class="detail-item-label">有效周次</div>
+          <div class="detail-item-value">${e.week_start} – ${e.week_end}</div>
+        </div>
+      </div>
+      ${e.description
+        ? `<div class="detail-desc">${e.description}</div>`
+        : ''}
+    `;
+
+    Modal.open(`📅 课程详情`, body,
+      `<button class="btn btn-secondary" onclick="Modal.close()">关闭</button>
+       <button class="btn btn-primary" onclick="Modal.close();Courses.openSection(${e.section_id})">查看班级 →</button>`
+    );
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   APPLICATIONS MODULE
+═══════════════════════════════════════════════════════ */
+const Applications = {
+  _currentTab: 'overview',
+
+  async load() {
+    this.switchTab('overview');
+  },
+
+  switchTab(tab) {
+    this._currentTab = tab;
+    ['overview','advisees'].forEach(t => {
+      const btn = document.getElementById(`appTab-${t}`);
+      const pane = document.getElementById(`appPane-${t}`);
+      if (btn) btn.classList.toggle('active', t === tab);
+      if (pane) pane.style.display = t === tab ? '' : 'none';
+    });
+    if (tab === 'overview') this.loadOverview();
+    if (tab === 'advisees') this.loadAdvisees();
+  },
+
+  // ── Available Courses ──────────────────────────────
+  async loadCourses() {
+    const el = document.getElementById('coursesList');
+    el.innerHTML = '<div class="spinner"></div>';
+    try {
+      const rows = await appApiGet('get_courses_to_apply');
+      if (!rows.length) { el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-ter)">暂无可申请的课程</div>'; return; }
+      el.innerHTML = rows.map(c => {
+        // Helper: sanitize possibly-missing or literal-'undefined' values
+        const safe = v => (v === undefined || v === null || v === 'undefined') ? '' : v;
+        const escapeHtmlLocal = s => { if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); };
+
+        const courseName = safe(c.course_name) || safe(c.name) || '—';
+        const dept = safe(c.dept_name) || '';
+        const creditsVal = (typeof c.credits !== 'undefined' && c.credits !== null) ? c.credits : ((typeof c.credit !== 'undefined' && c.credit !== null) ? c.credit : 0);
+        const creditsText = `${creditsVal} 学分`;
+
+        const pill = c.already_teaching_now
+          ? `<span class="status-pill pill-enrolled">授课中</span>`
+          : (c.existing_section_id
+              ? `<span class="status-pill pill-pending">已有班级</span>`
+              : '');
+
+        const btn = c.already_teaching_now
+          ? `<button class="btn btn-ghost btn-sm" disabled>授课中</button>`
+          : `<button class="btn btn-primary btn-sm" onclick='Applications.openApplyModal(${c.course_id}, ${JSON.stringify(courseName)})'>申请授课</button>`;
+
+        return `<div class="avail-course-row">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px">${escapeHtmlLocal(courseName)}</div>
+            <div style="font-size:12px;color:var(--text-sec)">${escapeHtmlLocal(dept)} · ${creditsText}</div>
+          </div>
+          ${pill}
+          ${btn}
+        </div>`;
+      }).join('');
+    } catch(e) { el.innerHTML = `<p style="color:var(--red);padding:20px">${escHtml(e.message || '数据加载失败，请稍后重试')}</p>`; }
+  },
+
+  // ── Teaching Overview ──────────────────────────────
+  async loadOverview() {
+    document.getElementById('overviewBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr>';
+    document.getElementById('enrollStatsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-ter)">Loading…</td></tr>';
+    try {
+      const [overviewRows, statRows] = await Promise.all([
+        appApiGet('get_teaching_overview'),
+        appApiGet('get_enrollment_stats'),
+      ]);
+
+      if (overviewRows.length) {
+        document.getElementById('overviewBody').innerHTML = overviewRows.map(r => {
+          const pct = parseFloat(r.fill_pct ?? 0);
+          const barW = Math.round(Math.min(pct, 100));
+          const bar = `<span class="enroll-bar" style="width:${barW}px"></span>`;
+          return `<tr style="cursor:pointer" onclick="Courses.openSection(${r.section_id})">
+            <td><strong>${r.course_name}</strong></td>
+            <td>${r.semester} ${r.year}</td>
+            <td>${r.enrolled_count ?? 0}</td>
+            <td>${r.capacity ?? '∞'}</td>
+            <td>${bar} ${pct.toFixed(1)}%</td>
+            <td>${r.enrollment_rank ?? '—'}</td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();Applications.openUpdateModal(${r.section_id},${r.capacity ?? 'null'},${JSON.stringify(r.enrollment_start ?? '')},${JSON.stringify(r.enrollment_end ?? '')})">Edit</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="event.stopPropagation();Applications.removeTeaching(${r.section_id})">Remove</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } else {
+        document.getElementById('overviewBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-ter)">暂无教学任务</td></tr>';
+      }
+
+      if (statRows.length) {
+        document.getElementById('enrollStatsBody').innerHTML = statRows.map(r => `<tr>
+          <td>${r.course_name}</td>
+          <td>${r.semester} ${r.year}</td>
+          <td><span class="status-pill pill-enrolled">${r.enrolled_count ?? 0}</span></td>
+          <td>${r.capacity ?? '∞'}</td>
+        </tr>`).join('');
+      } else {
+        document.getElementById('enrollStatsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-ter)">暂无数据</td></tr>';
+      }
+    } catch(e) {
+      document.getElementById('overviewBody').innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px">${escHtml(e.message || '数据加载失败，请稍后重试')}</td></tr>`;
+      document.getElementById('enrollStatsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-ter)">暂无数据</td></tr>';
+    }
+  },
+
+  // ── My Advisees ────────────────────────────────────
+  async loadAdvisees() {
+    const el = document.getElementById('adviseesList');
+    el.innerHTML = '<div class="spinner"></div>';
+    try {
+      const rows = await appApiGet('get_advisor_students');
+      if (!rows.length) {
+        el.innerHTML = '<div style="text-align:center;padding:48px;color:var(--text-ter)">暂无指导学生</div>';
+        return;
+      }
+      el.innerHTML = rows.map(r => {
+        const gpa = parseFloat(r.gpa ?? 0).toFixed(2);
+        return `<div class="advisee-card">
+          <div class="gpa-badge">${gpa}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:14px">${r.student_name}</div>
+            <div style="font-size:12px;color:var(--text-sec)">${r.student_no} · ${r.dept_name ?? ''}</div>
+            <div style="font-size:12px;color:var(--text-ter)">GPA排名：#${r.gpa_rank ?? '—'}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) { el.innerHTML = `<p style="color:var(--red);padding:20px">${escHtml(e.message || '数据加载失败，请稍后重试')}</p>`; }
+  },
+
+  // ── Apply to Teach Modal ───────────────────────────
+  openApplyModal(course_id, course_name) {
+    const yr = new Date().getFullYear();
+    const body = `
+      <div style="display:grid;gap:14px">
+        <div style="font-weight:600;font-size:15px">${course_name}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">学期 *</label>
+            <select id="applySemSel" class="filter-select" style="width:100%">${window.teacherGetSemesterOptionsHtml(window.teacherGetEnumEntries('semester')[0] ? window.teacherGetEnumEntries('semester')[0].key : '', { withSuffix: false, includeEnglish: true })}</select>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">年份 *</label>
+            <input type="number" id="applyYearInp" class="filter-select" style="width:100%" value="${yr}" min="2020" max="2035" />
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">容量（可选）</label>
+          <input type="number" id="applyCapInp" class="filter-select" style="width:100%" placeholder="如 40" min="1" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">选课开始时间</label>
+            <input type="date" id="applyStartInp" class="filter-select" style="width:100%" />
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">选课结束时间</label>
+            <input type="date" id="applyEndInp" class="filter-select" style="width:100%" />
+          </div>
+        </div>
+      </div>`;
+    Modal.open('申请授课', body,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Applications.submitApply(${course_id})">确认申请</button>`
+    );
+  },
+
+  async submitApply(course_id) {
+    const submitBtn = Modal.primaryButton();
+    const semester = document.getElementById('applySemSel').value;
+    const year = parseInt(document.getElementById('applyYearInp').value);
+    const capacity = parseInt(document.getElementById('applyCapInp').value) || null;
+    const enrollment_start = document.getElementById('applyStartInp').value || null;
+    const enrollment_end   = document.getElementById('applyEndInp').value   || null;
+    if (!year || year < 2020) { Toast.show('年份无效，请填写 2020 年之后的学年', 'warn'); return; }
+    if (capacity !== null && capacity <= 0) { Toast.show('容量必须大于 0', 'warn'); return; }
+    if (enrollment_start && enrollment_end && enrollment_start > enrollment_end) {
+      Toast.show('选课开始时间不能晚于结束时间', 'warn');
+      return;
+    }
+    setBusyState(submitBtn, true, '提交中...');
+    try {
+      await appApiPost('apply_to_teach', {course_id, semester, year, capacity, enrollment_start, enrollment_end});
+      Modal.close();
+      Toast.show('授课申请已提交');
+      await this.loadCourses();
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    } finally {
+      setBusyState(submitBtn, false);
+    }
+  },
+
+  // ── Remove Teaching ────────────────────────────────
+  removeTeaching(section_id) {
+    Modal.open(
+      '移除任教',
+      '<p style="color:var(--text-sec);font-size:14px;line-height:1.7">确定从该班级中移除自己吗？<br>若该班级已有考试记录，系统会拒绝本次移除。</p>',
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-danger" onclick="Applications._confirmRemoveTeaching(${section_id})">确认移除</button>`
+    );
+  },
+
+  async _confirmRemoveTeaching(section_id) {
+    const submitBtn = Modal.primaryButton();
+    setBusyState(submitBtn, true, '处理中...');
+    try {
+      await appApiPost('remove_teaching', {section_id});
+      Modal.close();
+      Toast.show('已从该班级移除任教关系');
+      await this.loadOverview();
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    } finally {
+      setBusyState(submitBtn, false);
+    }
+  },
+
+  // ── Update Section Info Modal ──────────────────────
+  openUpdateModal(section_id, capacity, enrollment_start, enrollment_end) {
+    const body = `
+      <div style="display:grid;gap:14px">
+        <div>
+          <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">容量</label>
+          <input type="number" id="updCapInp" class="filter-select" style="width:100%" value="${capacity ?? ''}" min="1" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">选课开始时间</label>
+            <input type="date" id="updStartInp" class="filter-select" style="width:100%" value="${enrollment_start ?? ''}" />
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">选课结束时间</label>
+            <input type="date" id="updEndInp" class="filter-select" style="width:100%" value="${enrollment_end ?? ''}" />
+          </div>
+        </div>
+      </div>`;
+    Modal.open('更新班级信息', body,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Applications.submitUpdate(${section_id})">保存</button>`
+    );
+  },
+
+  async submitUpdate(section_id) {
+    const submitBtn = Modal.primaryButton();
+    const capacity = parseInt(document.getElementById('updCapInp').value) || null;
+    const enrollment_start = document.getElementById('updStartInp').value || null;
+    const enrollment_end   = document.getElementById('updEndInp').value   || null;
+    if (capacity !== null && capacity <= 0) { Toast.show('容量必须大于 0', 'warn'); return; }
+    if (enrollment_start && enrollment_end && enrollment_start > enrollment_end) {
+      Toast.show('选课开始时间不能晚于结束时间', 'warn');
+      return;
+    }
+    setBusyState(submitBtn, true, '保存中...');
+    try {
+      await appApiPost('update_section_info', {section_id, capacity, enrollment_start, enrollment_end});
+      Modal.close();
+      Toast.show('班级信息已更新');
+      await this.loadOverview();
+    } catch(e) {
+      Toast.show(e.message, 'error');
+    } finally {
+      setBusyState(submitBtn, false);
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   ANNOUNCEMENTS MODULE
+═══════════════════════════════════════════════════════ */
+const Announcements = {
+  _currentTab: 'all',
+
+  async load() {
+    await this.loadAll();
+  },
+
+  switchTab(tab) {
+    this._currentTab = tab;
+    ['all','inbox','section'].forEach(t => {
+      document.getElementById(`annTab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`annPane-${t}`).style.display = t === tab ? '' : 'none';
+    });
+    if (tab === 'all')     this.loadAll();
+    if (tab === 'inbox')   { this._initInboxControls(); this.loadInbox(); }
+    if (tab === 'section') this._initSectionSel();
+  },
+
+  async loadAll() {
+    const el = document.getElementById('annAllList');
+    el.innerHTML = '<div class="spinner"></div>';
+    try {
+      const res  = await fetch(`${ANN_API}?action=get_teacher_announcements`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const rows = json.data;
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:48px"><div class="empty-icon">📢</div>暂无公告</div>';
+        return;
+      }
+      el.innerHTML = rows.map(a => this._annCard(a, true)).join('');
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state">${e.message}</div>`;
+    }
+  },
+
+  async _initSectionSel() {
+    const sel = document.getElementById('annSectionSel');
+    if (sel.options.length <= 1) {
+      const sections = State.sections.length ? State.sections : await apiGet('get_sections');
+      State.sections = sections;
+      sections.forEach(s => {
+        sel.appendChild(new Option(`${s.course_name} (${s.semester} ${s.year})`, s.section_id));
+      });
+    }
+    sel.onchange = () => {
+      if (sel.value) this.loadSection(+sel.value);
+      else {
+        document.getElementById('annSectionCard').style.display  = 'none';
+        document.getElementById('annSectionEmpty').style.display = '';
+      }
+    };
+  },
+
+  async loadSection(sectionId) {
+    document.getElementById('annSectionCard').style.display  = 'block';
+    document.getElementById('annSectionEmpty').style.display = 'none';
+    const el = document.getElementById('annSectionList');
+    el.innerHTML = '<div class="spinner"></div>';
+
+    const sec = State.sections.find(s => s.section_id == sectionId);
+    document.getElementById('annSectionTitle').textContent = sec ? sec.course_name : '公告';
+
+    try {
+      const res  = await fetch(`${ANN_API}?action=get_section_announcements&section_id=${sectionId}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const rows = json.data;
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">📢</div>该班级暂无公告</div>';
+        return;
+      }
+      el.innerHTML = rows.map(a => this._annCard(a, false)).join('');
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state">${e.message}</div>`;
+    }
+  },
+
+  async loadInbox() {
+    const el = document.getElementById('annInboxList');
+    const searchInput = document.getElementById('annInboxSearch');
+    const q = searchInput ? searchInput.value.trim() : '';
+    const page = 1;
+    // support passing page via arguments in future: read current page from dataset
+    el.innerHTML = '<div class="spinner"></div>';
+    try {
+      const per_page = 10;
+      const params = new URLSearchParams();
+      params.set('action', 'get_inbox');
+      if (q) params.set('q', q);
+      params.set('page', page);
+      params.set('per_page', per_page);
+      const res  = await fetch(`${ANN_API}?${params.toString()}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const rows = json.data || json.announcements || [];
+      const meta = json.meta || { total: rows.length, page: page, per_page: per_page, total_pages: Math.max(1, Math.ceil(rows.length / per_page)) };
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty-state" style="padding:48px"><div class="empty-icon">📢</div>暂无收到的公告</div>';
+        document.getElementById('annInboxPagination').style.display = 'none';
+        return;
+      }
+      el.innerHTML = rows.map(a => this._annCard(a, true)).join('');
+      this._renderInboxPagination(meta, q);
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state">${e.message}</div>`;
+      const pag = document.getElementById('annInboxPagination'); if (pag) pag.innerHTML = '';
+    }
+  },
+
+  _initInboxControls() {
+    if (this._inboxInit) return; this._inboxInit = true;
+    const input = document.getElementById('annInboxSearch');
+    const btn = document.getElementById('annInboxSearchBtn');
+    if (btn && input) {
+      btn.addEventListener('click', () => this.loadInbox());
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.loadInbox(); } });
+    }
+  },
+
+  _renderInboxPagination(meta, q) {
+    const container = document.getElementById('annInboxPagination');
+    if (!container) return;
+    container.innerHTML = '';
+    if (!meta || (meta.total_pages || 0) <= 1) {
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = 'flex';
+    const page = meta.page || 1;
+    const totalPages = meta.total_pages || 1;
+    let start = Math.max(1, page - 3);
+    let end = Math.min(totalPages, page + 3);
+    if (end - start < 6) { start = Math.max(1, page - 3); end = Math.min(totalPages, start + 6); }
+    const createBtn = (label, p, active) => `<button class="pag-btn ${active? 'active':''}" data-page="${p}" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:${active? 'var(--bg-light)':'#fff'};cursor:pointer">${label}</button>`;
+    let html = '';
+    if (page > 1) html += createBtn('上一页', page-1, false);
+    if (start > 1) { html += createBtn('1', 1, false); if (start > 2) html += `<span style="padding:6px 8px">…</span>`; }
+    for (let i = start; i <= end; i++) html += createBtn(String(i), i, i === page);
+    if (end < totalPages) { if (end < totalPages - 1) html += `<span style="padding:6px 8px">…</span>`; html += createBtn(String(totalPages), totalPages, false); }
+    if (page < totalPages) html += createBtn('下一页', page+1, false);
+    container.innerHTML = html;
+    container.querySelectorAll('.pag-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = parseInt(btn.getAttribute('data-page'), 10) || 1;
+        const input = document.getElementById('annInboxSearch');
+        const qv = input ? input.value.trim() : '';
+        // fetch with page p
+        (async () => {
+          const el = document.getElementById('annInboxList'); el.innerHTML = '<div class="spinner"></div>';
+          try {
+            const per_page = meta.per_page || 10;
+            const params = new URLSearchParams(); params.set('action','get_inbox'); if (qv) params.set('q', qv); params.set('page', p); params.set('per_page', per_page);
+            const res = await fetch(`${ANN_API}?${params.toString()}`);
+            const json = await res.json(); if (!json.ok) throw new Error(json.error);
+            const rows = json.data || json.announcements || [];
+            const newMeta = json.meta || { total: rows.length, page: p, per_page: per_page, total_pages: Math.max(1, Math.ceil(rows.length / per_page)) };
+            if (!rows.length) { el.innerHTML = '<div class="empty-state" style="padding:48px"><div class="empty-icon">📢</div>暂无收到的公告</div>'; container.style.display = 'none'; return; }
+            el.innerHTML = rows.map(a => this._annCard(a, true)).join('');
+            this._renderInboxPagination(newMeta, qv);
+          } catch(e) { el.innerHTML = `<div class="empty-state">${e.message}</div>`; container.innerHTML = ''; }
+        })();
+      });
+    });
+  },
+
+  _annCard(a, showCourse) {
+    const pinLabel = a.is_pinned ? `<span style="color:var(--orange,#f59e0b);font-size:11px;font-weight:700">📌 优先显示</span>` : '';
+    const courseLine = showCourse && a.course_name
+      ? `<span style="font-size:11px;color:var(--text-ter);margin-right:8px">${escHtml(a.course_name)} · ${escHtml(a.semester)} ${a.year}</span>`
+      : '';
+    return `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:12px;background:var(--surface)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            ${pinLabel}
+            <span style="font-weight:700;font-size:14px">${escHtml(a.title)}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-sec);margin-bottom:8px">
+            ${courseLine}
+            ${escHtml(a.teacher_name ?? '')} · ${fmtDate(a.created_at)}
+            ${a.updated_at !== a.created_at ? `<span style="color:var(--text-ter)">（已编辑）</span>` : ''}
+          </div>
+          <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${escHtml(a.content)}</div>
+        </div>
+        ${a.is_author ? `
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" title="${a.is_pinned ? '取消优先显示' : '设为优先显示'}"
+            onclick="Announcements.togglePin(${a.announcement_id},${a.is_pinned})">${a.is_pinned ? '📌' : '📍'}</button>
+          <button class="btn btn-ghost btn-sm" title="编辑"
+            data-ann-id="${a.announcement_id}"
+            data-ann-title="${escHtml(a.title)}"
+            data-ann-content="${escHtml(a.content)}"
+            onclick="Announcements.openEditModal(this.dataset.annId,this.dataset.annTitle,this.dataset.annContent)">✏️</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" title="删除"
+            onclick="Announcements.deleteAnn(${a.announcement_id})">🗑</button>
+        </div>
+        ` : ''}
+      </div>
+    </div>`;
+  },
+
+  openPostModal() {
+    const sections = State.sections;
+    const selHtml = sections.length
+      ? `<select class="form-select" id="mAnnSection">
+          <option value="">— 选择班级 —</option>
+          ${sections.map(s => `<option value="${s.section_id}">${s.course_name} (${s.semester} ${s.year})</option>`).join('')}
+         </select>`
+      : `<input type="number" class="form-input" id="mAnnSection" placeholder="班级 section_id">`;
+
+    Modal.open('📢 发布公告', `
+      <div class="form-group"><label class="form-label">选择班级</label>${selHtml}</div>
+      <div class="form-group">
+        <label class="form-label">标题</label>
+        <input type="text" class="form-input" id="mAnnTitle" placeholder="公告标题" maxlength="200">
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容</label>
+        <textarea class="form-input" id="mAnnContent" rows="5" placeholder="公告内容…" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+        <input type="checkbox" id="mAnnPin">
+        <label for="mAnnPin" style="font-size:13px">📌 优先显示此公告</label>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Announcements._submitPost()">发布</button>`
+    );
+  },
+
+  async _submitPost() {
+    const submitBtn = Modal.primaryButton();
+    const section_id = +(document.getElementById('mAnnSection').value);
+    const title      = document.getElementById('mAnnTitle').value.trim();
+    const content    = document.getElementById('mAnnContent').value.trim();
+    const is_pinned  = document.getElementById('mAnnPin').checked ? 1 : 0;
+    if (!section_id) { Toast.show('请选择班级', 'warn'); return; }
+    if (!title)      { Toast.show('请输入标题', 'warn'); return; }
+    if (!content)    { Toast.show('请输入内容', 'warn'); return; }
+
+    setBusyState(submitBtn, true, '发布中...');
+    try {
+      const res  = await fetch(`${ANN_API}?action=post_announcement`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section_id, title, content, is_pinned }),
+      });
+      await parseResponseJson(res, '公告发布失败');
+      Toast.show('公告已发布');
+      Modal.close();
+      this.load();
+    } catch(e) { Toast.show(e.message, 'error'); }
+    finally { setBusyState(submitBtn, false); }
+  },
+
+  openEditModal(annId, title, content) {
+    Modal.open('✏️ 编辑公告', `
+      <div class="form-group">
+        <label class="form-label">标题</label>
+        <input type="text" class="form-input" id="mEditTitle" maxlength="200">
+      </div>
+      <div class="form-group">
+        <label class="form-label">内容</label>
+        <textarea class="form-input" id="mEditContent" rows="5" style="resize:vertical"></textarea>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-primary" onclick="Announcements._submitEdit(${+annId})">保存</button>`
+    );
+    document.getElementById('mEditTitle').value   = title;
+    document.getElementById('mEditContent').value = content;
+  },
+
+  async _submitEdit(annId) {
+    const submitBtn = Modal.primaryButton();
+    const title   = document.getElementById('mEditTitle').value.trim();
+    const content = document.getElementById('mEditContent').value.trim();
+    if (!title || !content) { Toast.show('标题和内容不能为空', 'warn'); return; }
+    setBusyState(submitBtn, true, '保存中...');
+    try {
+      const res  = await fetch(`${ANN_API}?action=update_announcement`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ announcement_id: annId, title, content }),
+      });
+      await parseResponseJson(res, '公告更新失败');
+      Toast.show('公告已更新');
+      Modal.close();
+      this.load();
+    } catch(e) { Toast.show(e.message, 'error'); }
+    finally { setBusyState(submitBtn, false); }
+  },
+
+  async togglePin(annId, currentPin) {
+    const pin = currentPin ? 0 : 1;
+    try {
+      const res  = await fetch(`${ANN_API}?action=pin_announcement`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ announcement_id: annId, pin }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      Toast.show(pin ? '已设为优先显示' : '已取消优先显示');
+      this.load();
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+
+  deleteAnn(annId) {
+    Modal.open('删除公告',
+      '<p style="color:var(--text-sec)">确定删除此公告？此操作无法撤销。</p>',
+      `<button class="btn btn-secondary" onclick="Modal.close()">取消</button>
+       <button class="btn btn-danger" onclick="Announcements._doDelete(${annId})">删除</button>`
+    );
+  },
+
+  async _doDelete(annId) {
+    Modal.close();
+    try {
+      const res  = await fetch(`${ANN_API}?action=delete_announcement`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ announcement_id: annId }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      Toast.show('公告已删除');
+      this.load();
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   ATTENDANCE MODULE
+═══════════════════════════════════════════════════════ */
+const Attendance = {
+  _currentTab: 'record',
+  _schedules: [],   // schedules for selected section
+
+  async init() {
+    await this._populateSel('attSection');
+    await this._populateSel('attReportSection');
+    document.getElementById('attEmpty').style.display = '';
+    document.getElementById('attCard').style.display  = 'none';
+  },
+
+  async _populateSel(selId) {
+    const sel = document.getElementById(selId);
+    if (sel.options.length > 1) return;
+    const sections = State.sections.length ? State.sections : await apiGet('get_sections');
+    State.sections = sections;
+    sections.forEach(s => sel.appendChild(
+      new Option(`${s.course_name} (${s.semester} ${s.year})`, s.section_id)
+    ));
+  },
+
+  switchTab(tab) {
+    this._currentTab = tab;
+    ['record','report'].forEach(t => {
+      document.getElementById(`attTab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`attPane-${t}`).style.display = t === tab ? '' : 'none';
+    });
+  },
+
+  async onSectionChange() {
+    const sid = +document.getElementById('attSection').value;
+    const schSel  = document.getElementById('attSchedule');
+    const weekSel = document.getElementById('attWeek');
+    schSel.innerHTML  = '<option value="">— 选择课次 —</option>';
+    weekSel.innerHTML = '<option value="">— 周次 —</option>';
+    schSel.disabled  = true;
+    weekSel.disabled = true;
+    document.getElementById('attSaveBtn').style.display   = 'none';
+    document.getElementById('attQuickAll').style.display  = 'none';
+    document.getElementById('attCard').style.display      = 'none';
+    document.getElementById('attEmpty').style.display     = '';
+    if (!sid) return;
+
+    try {
+      const res  = await fetch(`${ATT_API}?action=get_section_schedules&section_id=${sid}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      this._schedules = json.data;
+      if (!this._schedules.length) { Toast.show('该班级暂无排课记录', 'warn'); return; }
+
+      const days = ['','周一','周二','周三','周四','周五','周六','周日'];
+      this._schedules.forEach(s => {
+        schSel.appendChild(new Option(
+          `${days[s.day_of_week]} ${s.start_time}–${s.end_time} (${s.location})`,
+          s.schedule_id
+        ));
+      });
+      schSel.disabled = false;
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+
+  onScheduleChange() {
+    const sch = this._schedules.find(s => s.schedule_id == +document.getElementById('attSchedule').value);
+    const weekSel = document.getElementById('attWeek');
+    weekSel.innerHTML = '<option value="">— 周次 —</option>';
+    weekSel.disabled  = true;
+    if (!sch) return;
+
+    const ws = sch.week_start ?? 1;
+    const we = sch.week_end   ?? 16;
+    for (let w = ws; w <= we; w++) weekSel.appendChild(new Option(`第 ${w} 周`, w));
+    weekSel.disabled = false;
+  },
+
+  async loadAttendance() {
+    const scheduleId = +document.getElementById('attSchedule').value;
+    const week       = +document.getElementById('attWeek').value;
+    if (!scheduleId || !week) return;
+
+    document.getElementById('attCard').style.display  = 'block';
+    document.getElementById('attEmpty').style.display = 'none';
+    document.getElementById('attBody').innerHTML = '<tr><td colspan="4"><div class="spinner"></div></td></tr>';
+
+    try {
+      const res  = await fetch(`${ATT_API}?action=get_schedule_attendance&schedule_id=${scheduleId}&week=${week}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const rows = json.data;
+
+      const sch = this._schedules.find(s => s.schedule_id == scheduleId);
+      const days = ['','周一','周二','周三','周四','周五','周六','周日'];
+      document.getElementById('attCardTitle').textContent =
+        sch ? `${days[sch.day_of_week]} ${sch.start_time}–${sch.end_time}` : '考勤录入';
+      document.getElementById('attCardSub').textContent = `第 ${week} 周 · 共 ${rows.length} 名学生`;
+
+      const STATUS_LABELS = window.teacherGetEnumMap('attendance_status');
+      const STATUS_COLORS = { present:'var(--green)', absent:'var(--red)', late:'var(--orange,#f59e0b)', excused:'var(--text-sec)', not_recorded:'var(--text-ter)' };
+
+      document.getElementById('attBody').innerHTML = rows.map(r => `
+        <tr>
+          <td>
+            <div class="student-cell">
+              ${avatarEl(r.student_name, r.image ? window.teacherBuildAvatarUrl(r.image) : null)}
+              <div>
+                <div class="student-name">${r.student_name}</div>
+                <div class="student-id">${r.student_no}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--text-sec)">${r.dept_name}</td>
+          <td>
+            <select class="form-select" id="attSt-${r.student_id}" style="width:100px">
+              ${['present','absent','late','excused'].map(s =>
+                `<option value="${s}" ${r.status === s ? 'selected' : ''}>${STATUS_LABELS[s]}</option>`
+              ).join('')}
+            </select>
+          </td>
+          <td>
+            <input type="text" class="form-input" id="attNote-${r.student_id}"
+              value="${r.note ?? ''}" placeholder="备注" style="font-size:12px">
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="4"><div class="empty-state">暂无学生</div></td></tr>';
+
+      document.getElementById('attSaveBtn').style.display  = rows.length ? '' : 'none';
+      document.getElementById('attQuickAll').style.display = rows.length ? '' : 'none';
+      this._rows = rows;
+    } catch(e) {
+      Toast.show(e.message, 'error');
+      document.getElementById('attBody').innerHTML = `<tr><td colspan="4" style="color:var(--red);padding:16px">${e.message}</td></tr>`;
+    }
+  },
+
+  setAll(status) {
+    (this._rows || []).forEach(r => {
+      const sel = document.getElementById(`attSt-${r.student_id}`);
+      if (sel) sel.value = status;
+    });
+  },
+
+  async saveAll() {
+    const scheduleId = +document.getElementById('attSchedule').value;
+    const week       = +document.getElementById('attWeek').value;
+    if (!scheduleId || !week || !this._rows?.length) return;
+
+    const records = this._rows.map(r => ({
+      student_id: r.student_id,
+      status: document.getElementById(`attSt-${r.student_id}`)?.value || 'present',
+      note:   document.getElementById(`attNote-${r.student_id}`)?.value?.trim() || null,
+    }));
+
+    try {
+      const res  = await fetch(`${ATT_API}?action=batch_record`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule_id: scheduleId, week, records }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      Toast.show(`已保存 ${json.data.saved} 条考勤记录`);
+      await this.loadAttendance();
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+
+  async loadReport() {
+    const sid       = +document.getElementById('attReportSection').value;
+    const threshold = +document.getElementById('attWarnThreshold').value || 75;
+    if (!sid) return;
+
+    document.getElementById('attReportCard').style.display  = 'block';
+    document.getElementById('attReportEmpty').style.display = 'none';
+    document.getElementById('attReportBody').innerHTML = '<tr><td colspan="8"><div class="spinner"></div></td></tr>';
+
+    try {
+      const res  = await fetch(`${ATT_API}?action=get_section_report&section_id=${sid}&warn_threshold=${threshold}`);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error);
+      const rows = json.data;
+
+      const sec = State.sections.find(s => s.section_id == sid);
+      document.getElementById('attReportSub').textContent =
+        `${sec?.course_name ?? ''} · 预警线 ${threshold}%`;
+
+      document.getElementById('attReportBody').innerHTML = rows.map(r => {
+        const rate = r.attendance_rate_pct !== null ? (+r.attendance_rate_pct).toFixed(1) + '%' : '—';
+        const flagColor = r.attendance_flag === 'warning' ? 'var(--red)' : r.attendance_flag === 'ok' ? 'var(--green)' : 'var(--text-ter)';
+        const flagLabel = r.attendance_flag === 'warning' ? '⚠️ 预警' : r.attendance_flag === 'ok' ? '✅ 正常' : '—';
+        return `<tr>
+          <td>
+            <div class="student-cell">
+              ${avatarEl(r.student_name, null)}
+              <div>
+                <div class="student-name">${r.student_name}</div>
+                <div class="student-id">${r.student_no}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--text-sec)">${r.dept_name}</td>
+          <td style="text-align:center">${r.total_recorded ?? 0}</td>
+          <td style="text-align:center;color:var(--green)">${r.attended ?? 0}</td>
+          <td style="text-align:center;color:var(--red)">${r.absent_count ?? 0}</td>
+          <td style="text-align:center">${r.late_count ?? 0}</td>
+          <td style="text-align:center;font-weight:600">${rate}</td>
+          <td style="color:${flagColor};font-weight:600">${flagLabel}</td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="8"><div class="empty-state">暂无考勤数据</div></td></tr>';
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+};
+
+/* Audit module removed */
+
+/* ═══════════════════════════════════════════════════════
+   BATCH IMPORT MODULE
+═══════════════════════════════════════════════════════ */
+const BatchImport = {
+  _students:    [],   // enrolled students with current scores
+  _matched:     [],   // parsed + matched records for preview
+  _inputTab:    'csv',
+  _pendingInit: null, // set by initFromPending() before navigation
+
+  initFromPending(sectionId, examType, examDate) {
+    this._pendingInit = { sectionId, examType, examDate };
+    Nav.go('batch-import');
+  },
+
+  async init() {
+    const sel = document.getElementById('biSection');
+    if (sel.options.length <= 1) {
+      const sections = State.sections.length ? State.sections : await apiGet('get_sections');
+      State.sections = sections;
+      sections.forEach(s => sel.appendChild(
+        new Option(`${s.course_name} (${s.semester} ${s.year})`, s.section_id)
+      ));
+    }
+
+    // Pre-fill from pending exam (navigated from grades view)
+    if (this._pendingInit) {
+      const { sectionId, examType, examDate } = this._pendingInit;
+      this._pendingInit = null;
+      sel.value = sectionId;
+      document.getElementById('biType').value = examType;
+      document.getElementById('biDate').value = examDate;
+      await this.onSectionChange();
+      return;
+    }
+
+    document.getElementById('biDate').value = new Date().toISOString().slice(0, 10);
+    // Preserve input card if a section is already selected and students loaded
+    const hasSel = !!sel.value;
+    if (!hasSel || !this._students.length) {
+      document.getElementById('biInputCard').style.display   = 'none';
+      document.getElementById('biPreviewCard').style.display = 'none';
+      document.getElementById('biTemplateBtn').style.display = 'none';
+      document.getElementById('biEmpty').style.display       = '';
+    }
+  },
+
+  async onSectionChange() {
+    const sid = +document.getElementById('biSection').value;
+    this._students = []; this._matched = [];
+    document.getElementById('biInputCard').style.display   = 'none';
+    document.getElementById('biPreviewCard').style.display = 'none';
+    document.getElementById('biTemplateBtn').style.display = 'none';
+    document.getElementById('biResultSummary').style.display = 'none';
+    if (!sid) { document.getElementById('biEmpty').style.display = ''; return; }
+
+    try {
+      const students = await apiGet('get_section_students', { section_id: sid });
+      this._students = students;
+      document.getElementById('biInputCard').style.display = '';
+      document.getElementById('biEmpty').style.display     = 'none';
+      document.getElementById('biTemplateBtn').style.display = '';
+    } catch(e) { Toast.show(e.message, 'error'); }
+  },
+
+  switchInputTab(tab) {
+    this._inputTab = tab;
+    ['csv','paste'].forEach(t => {
+      document.getElementById(`biTab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`biPane-${t}`).style.display = t === tab ? '' : 'none';
+    });
+  },
+
+  downloadTemplate() {
+    const type    = document.getElementById('biType').value;
+    const typeMap = { final:'期末', midterm:'期中', quiz:'测验' };
+    let csv = `学号,姓名,${typeMap[type] ?? ''}成绩\n`;
+    this._students.forEach(s => {
+      const cur = type === 'final'   ? (s.final_score   ?? '')
+                : type === 'midterm' ? (s.midterm_score ?? '')
+                :                     (s.quiz_avg       ?? '');
+      csv += `${s.student_no},${s.name},${cur}\n`;
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `成绩模板_${type}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  onFileDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) this._readFile(file);
+  },
+
+  onFileChange(input) {
+    const file = input.files[0];
+    if (file) this._readFile(file);
+    input.value = '';
+  },
+
+  _readFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => this._parseAndPreview(e.target.result);
+    reader.readAsText(file, 'UTF-8');
+  },
+
+  parsePaste() {
+    this._parseAndPreview(document.getElementById('biPasteArea').value);
+  },
+
+  _parseAndPreview(text) {
+    const lines   = text.trim().split(/\r?\n/);
+    const records = [];
+    // Skip header row if 2nd column is non-numeric
+    const startIdx = lines.length && isNaN(parseFloat(lines[0].split(',')[1])) ? 1 : 0;
+
+    for (let i = startIdx; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length < 2) continue;
+      const student_no = cols[0].trim();
+      const score      = parseFloat(cols[cols.length - 1].trim());
+      if (student_no) records.push({ student_no, score: isNaN(score) ? null : score });
+    }
+    this._matched = this._buildMatches(records);
+    this._renderPreview();
+  },
+
+  _buildMatches(records) {
+    const type = document.getElementById('biType').value;
+    return records.map(rec => {
+      const student    = this._students.find(s => s.student_no === rec.student_no);
+      const validStudentNo = /^\d{8}$/.test(rec.student_no);
+      const currentScore = student
+        ? (type === 'final'   ? student.final_score
+         : type === 'midterm' ? student.midterm_score
+         :                     student.quiz_avg)
+        : null;
+      return {
+        student_no:    rec.student_no,
+        student_id:    student?.user_id  ?? null,
+        student_name:  student?.name     ?? '—',
+        current_score: currentScore,
+        new_score:     rec.score,
+        valid: validStudentNo && !!student && rec.score !== null && rec.score >= 0 && rec.score <= 100,
+        reason: !validStudentNo                                ? '学号格式错误'
+               : !student                                       ? '未找到学生'
+               : (rec.score === null || rec.score < 0 || rec.score > 100) ? '成绩越界'
+               : '',
+      };
+    });
+  },
+
+  _renderPreview() {
+    const valid   = this._matched.filter(r => r.valid).length;
+    const invalid = this._matched.length - valid;
+    document.getElementById('biPreviewSub').textContent =
+      `共 ${this._matched.length} 条 · 有效 ${valid} · 无效 ${invalid}`;
+    document.getElementById('biResultSummary').style.display = 'none';
+
+    document.getElementById('biPreviewBody').innerHTML = this._matched.map(r => `
+      <tr style="${r.valid ? '' : 'opacity:0.5'}">
+        <td style="font-family:monospace;font-size:12px">${r.student_no}</td>
+        <td style="font-size:13px">${r.student_name}</td>
+        <td style="text-align:center">${r.current_score !== null ? (+r.current_score).toFixed(1) : '<span style="color:var(--text-ter)">—</span>'}</td>
+        <td style="text-align:center;font-weight:600">
+          ${r.new_score !== null ? (+r.new_score).toFixed(1) : '<span style="color:var(--red)">—</span>'}
+        </td>
+        <td>
+          ${r.valid
+            ? '<span style="color:var(--green);font-weight:600">✓ 有效</span>'
+            : `<span style="color:var(--red)">✗ ${r.reason}</span>`}
+        </td>
+      </tr>
+    `).join('');
+
+    document.getElementById('biPreviewCard').style.display = this._matched.length ? '' : 'none';
+    if (valid === 0 && this._matched.length > 0) Toast.show('没有有效记录，请检查格式', 'warn');
+  },
+
+  _renderResultSummary(payload) {
+    const box = document.getElementById('biResultSummary');
+    if (!box || !payload) return;
+    const saved = Number(payload.saved || 0);
+    const skipped = Number(payload.skipped || 0);
+    const attempted = Number(payload.attempted || (saved + skipped));
+    box.innerHTML = `
+      <div class="batch-summary-grid">
+        <div class="batch-summary-card">
+          <div class="batch-summary-label">提交记录</div>
+          <div class="batch-summary-value">${attempted}</div>
+        </div>
+        <div class="batch-summary-card is-ok">
+          <div class="batch-summary-label">成功保存</div>
+          <div class="batch-summary-value">${saved}</div>
+        </div>
+        <div class="batch-summary-card is-warn">
+          <div class="batch-summary-label">跳过记录</div>
+          <div class="batch-summary-value">${skipped}</div>
+        </div>
+      </div>
+      <div class="batch-summary-text">${escHtml(payload.message || `成功保存 ${saved} 条，跳过 ${skipped} 条。`)}</div>
+    `;
+    box.style.display = '';
+  },
+
+  async submit() {
+    const sectionId = +document.getElementById('biSection').value;
+    const examType  = document.getElementById('biType').value;
+    const examDate  = document.getElementById('biDate').value;
+    if (!sectionId || !examDate) { Toast.show('请选择班级和日期', 'warn'); return; }
+
+    const validRecords = this._matched.filter(r => r.valid).map(r => ({
+      student_id: r.student_id,
+      student_no: r.student_no,
+      score:      r.new_score,
+    }));
+    if (!validRecords.length) { Toast.show('没有有效记录可提交', 'warn'); return; }
+
+    const btn = document.getElementById('biSubmitBtn');
+    setBusyState(btn, true, '提交中...');
+    try {
+      const res  = await fetch(`${API}?action=batch_import_exam`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section_id: sectionId, exam_type: examType, exam_date: examDate, records: validRecords }),
+      });
+      const json = await parseResponseJson(res, '批量成绩提交失败');
+      this._renderResultSummary(json.data);
+      Toast.show(`成功保存 ${json.data.saved} 条，跳过 ${json.data.skipped} 条`);
+      await Promise.allSettled([
+        Grades._loadPending(),
+        ExamEvents.load(sectionId),
+      ]);
+      if (State.currentSectionId === sectionId) {
+        Exams.loadSection(sectionId);
+      }
+    } catch(e) { Toast.show(e.message, 'error'); }
+    finally    { setBusyState(btn, false); }
+  },
+
+  reset() {
+    this._matched = [];
+    document.getElementById('biPreviewCard').style.display = 'none';
+    document.getElementById('biResultSummary').style.display = 'none';
+    document.getElementById('biResultSummary').innerHTML = '';
+    document.getElementById('biPasteArea').value = '';
+    this.switchInputTab('csv');
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   WORKLOAD MODULE
+═══════════════════════════════════════════════════════ */
+const Workload = {
+  _semestersLoaded: false,
+
+  async init() {
+    await this._loadSemesters();
+    await this.load();
+  },
+
+  async _loadSemesters() {
+    if (this._semestersLoaded) return;
+    try {
+      const res  = await fetch(`${WORKLOAD_API}?action=get_semesters`);
+      const json = await res.json();
+      if (!json.ok) return;
+
+      const semSel  = document.getElementById('wlSemester');
+      const yearSel = document.getElementById('wlYear');
+      const years   = new Set();
+
+      json.data.forEach(r => {
+        years.add(r.year);
+        if (!semSel.querySelector(`option[value="${r.semester}"]`)) {
+          semSel.appendChild(new Option(
+            window.teacherFormatSemesterLabel(r.semester, { withSuffix: false, includeEnglish: true }),
+            r.semester
+          ));
+        }
+      });
+      [...years].sort((a, b) => b - a).forEach(y => {
+        yearSel.appendChild(new Option(`${y} 年`, y));
+      });
+      this._semestersLoaded = true;
+    } catch(e) { /* non-critical */ }
+  },
+
+  async load() {
+    const semester = document.getElementById('wlSemester').value;
+    const year     = +document.getElementById('wlYear').value;
+    const qs       = `semester=${encodeURIComponent(semester)}&year=${year}`;
+
+    document.getElementById('wlBody').innerHTML =
+      '<tr><td colspan="8" style="text-align:center;padding:32px"><div class="spinner"></div></td></tr>';
+
+    try {
+      const [sumRes, secRes] = await Promise.all([
+        fetch(`${WORKLOAD_API}?action=get_summary&${qs}`),
+        fetch(`${WORKLOAD_API}?action=get_by_section&${qs}`),
+      ]);
+      const [sumJson, secJson] = await Promise.all([sumRes.json(), secRes.json()]);
+
+      // ── Summary cards ──
+      if (sumJson.ok && sumJson.data) {
+        const s = sumJson.data;
+        document.getElementById('wl-sections').textContent = s.total_sections  ?? '0';
+        document.getElementById('wl-students').textContent = s.total_students  ?? '0';
+        document.getElementById('wl-credits').textContent  = s.total_credit_load ?? '0';
+        const hrs = s.total_weekly_minutes
+          ? (s.total_weekly_minutes / 60).toFixed(1) : '0';
+        document.getElementById('wl-hours').textContent   = hrs;
+        document.getElementById('wl-graded').textContent  = s.graded_students   ?? '0';
+        document.getElementById('wl-pending').textContent = s.ungraded_students ?? '0';
+      }
+
+      // ── Per-section table ──
+      if (!secJson.ok || !secJson.data.length) {
+        document.getElementById('wlBody').innerHTML =
+          '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-ter)">暂无教学数据</td></tr>';
+        document.getElementById('wlSectionCount').textContent = '';
+        return;
+      }
+
+      const rows = secJson.data;
+      document.getElementById('wlSectionCount').textContent = `共 ${rows.length} 个班级`;
+      document.getElementById('wlBody').innerHTML = rows.map(r => {
+        const hrs       = r.weekly_minutes ? (r.weekly_minutes / 60).toFixed(1) : '0';
+        const pct       = r.grade_completion_pct !== null ? +r.grade_completion_pct : 0;
+        const barColor  = pct >= 90 ? 'var(--green)' : pct >= 50 ? 'var(--orange,#f59e0b)' : 'var(--red)';
+        return `<tr>
+          <td>
+            <div style="font-weight:600;font-size:13px">${r.course_name}</div>
+            <div style="font-size:11px;color:var(--text-sec)">${r.credit} 学分 · ${r.course_hours} 课时</div>
+          </td>
+          <td style="font-size:12px">${r.semester} ${r.year}</td>
+          <td style="text-align:center;font-weight:600">${r.credit}</td>
+          <td style="text-align:center">${r.student_count ?? 0}</td>
+          <td style="text-align:center">${r.exam_count ?? 0}</td>
+          <td style="text-align:center">${scoreDisplay(r.avg_score)}</td>
+          <td style="text-align:center;font-weight:600">${hrs}</td>
+          <td class="workload-progress-cell">
+            <div class="progress-inline">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div>
+              </div>
+              <span class="progress-label" style="color:${barColor}">
+                ${r.grade_completion_pct !== null ? pct.toFixed(0) + '%' : '—'}
+              </span>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch(e) {
+      Toast.show(e.message, 'error');
+      document.getElementById('wlBody').innerHTML =
+        `<tr><td colspan="8" style="color:var(--red);padding:20px">${e.message}</td></tr>`;
+    }
+  },
+};
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+async function init() {
+  Profile.renderBoot();
+  await Promise.all([
+    Profile.load(),
+    Dashboard.load(),
+  ]);
+}
+
+init();
+</script>
+</body>
+</html>

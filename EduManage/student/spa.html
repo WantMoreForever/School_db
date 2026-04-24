@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生门户</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="../config/frontend-paths.php"></script>
+<link rel="stylesheet" id="portalCommonCssLink" href="../css/portal-common.css">
+<link rel="stylesheet" id="studentStyleCssLink" href="css/student_style.css">
+<script>
+(function () {
+    var paths = window.APP_PATHS || {};
+    var assets = paths.assets || {};
+    var versions = paths.versions || {};
+
+    function withVersion(url, version) {
+        if (!url || !version) {
+            return url;
+        }
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + version;
+    }
+
+    var portalCss = document.getElementById('portalCommonCssLink');
+    if (portalCss) {
+        portalCss.href = withVersion(assets.portal_common_css || portalCss.href, versions.portal_common_css || '');
+    }
+
+    var studentCss = document.getElementById('studentStyleCssLink');
+    if (studentCss) {
+        studentCss.href = withVersion(assets.student_css || studentCss.href, versions.student_css || '');
+    }
+})();
+</script>
+</head>
+<body class="portal-shell portal-student app-booting">
+
+<a class="skip-link" href="#studentContent">跳过到主要内容</a>
+
+<!-- sidebar injected here -->
+<div id="sidebar-container"></div>
+
+<main class="main" role="main">
+    <header class="topbar">
+        <div class="topbar-left">
+            <h1 class="view-title" id="viewTitle" tabindex="-1">学生门户</h1>
+        </div>
+        <div class="topbar-right">
+            <div class="status-dot" title="在线"></div>
+            <div class="topbar-time" id="clock"></div>
+        </div>
+    </header>
+
+    <div class="content">
+        <!-- alerts injected here -->
+        <div id="alertsContainer" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <!-- 合并的学生内容容器 -->
+        <div id="studentContent">
+
+            <!-- 全局无数据提示（共享） -->
+            <div id="noStudentNotice" class="student-data-notice" style="display:none;">
+                <div class="student-data-notice-icon">🔌</div>
+                <div class="student-data-notice-title">无法加载学生数据</div>
+                <div class="student-data-notice-text">请检查数据库连接或确认测试数据已正确插入</div>
+            </div>
+
+            <!-- 学生门户首页（student_portal.html 内容，ID 前缀 portal-，避免与其它页面冲突） -->
+            <section id="page-portal" style="display:none;">
+                <div class="enroll-banner fade-up" id="portalEnrollBanner" style="display:none">
+                    <div>
+                        <div class="eb-text">📢 选课窗口已开放！</div>
+                        <div class="eb-sub" id="portalEnrollEndText">截止时间</div>
+                    </div>
+                    <a class="btn-enroll" href="#course">立即选课 →</a>
+                </div>
+
+                <div class="hero-banner fade-up">
+                    <div class="hero-text">
+                        <div class="greeting" id="portalGreeting">WELCOME BACK</div>
+                        <div class="name" id="portalStudentName">同学</div>
+                        <div class="meta">
+                            <span>🏛 <span id="portalDeptName"></span> - <span id="portalMajorName"></span></span>
+                            <span>📅 <span id="portalGradeYear"></span></span>
+                        </div>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="val" id="portalGpaVal">0.00</span>
+                            <span class="label">GPA</span>
+                        </div>
+                        <div class="hero-divider"></div>
+                        <div class="hero-stat">
+                            <span class="val" id="portalCreditsVal">0.0</span>
+                            <span class="label">已修学分</span>
+                        </div>
+                        <div class="hero-divider"></div>
+                        <div class="hero-stat">
+                            <span class="val" id="portalEnrolledVal">0</span>
+                            <span class="label">总选课</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">功能导航</div>
+                <div class="func-grid fade-up delay-3">
+                    <a class="func-card fc-blue" href="#profile">
+                        <div class="func-icon-wrap">👁</div>
+                        <div class="func-body">
+                            <div class="ft">个人信息</div>
+                            <div class="fd">查看并维护姓名、联系方式、所属院系等基础信息，支持上传头像与修改密码。</div>
+                            <span class="ftag">Personal Information</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                    <a class="func-card fc-jade" href="#course">
+                        <div class="func-icon-wrap">📎</div>
+                        <div class="func-body">
+                            <div class="ft">选课系统</div>
+                            <div class="fd">浏览本学期开设课程，实时查看余量，一键完成选课与退课操作。</div>
+                            <span class="ftag">Course Selection</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                    <a class="func-card fc-gold" href="#grades">
+                        <div class="func-icon-wrap">📳</div>
+                        <div class="func-body">
+                            <div class="ft">成绩查询</div>
+                            <div class="fd">查看各科平时分、期末分及综合成绩，支持多学期筛选与 GPA 统计。</div>
+                            <span class="ftag">Grade Inquiry</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                    <a class="func-card fc-rose" href="#exam">
+                        <div class="func-icon-wrap">📑</div>
+                        <div class="func-body">
+                            <div class="ft">考试相关</div>
+                            <div class="fd">查看已选课程的考试安排、考场信息及时间，确认参考资格与相关注意事项。</div>
+                            <span class="ftag">About Exam</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                    <a class="func-card fc-jade" href="#free_classroom">
+                        <div class="func-icon-wrap">🏫</div>
+                        <div class="func-body">
+                            <div class="ft">空闲教室</div>
+                            <div class="fd">按周次、星期、节次和教室条件快速检索，查看当前哪些教室可以使用。</div>
+                            <span class="ftag">Free Classroom</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                    <a class="func-card fc-blue" href="#announcement">
+                        <div class="func-icon-wrap">📢</div>
+                        <div class="func-body">
+                            <div class="ft">通知公告</div>
+                            <div class="fd">查看学校、院系、专业或课程相关的最新公告，快速获取重要信息与安排。</div>
+                            <span class="ftag">Announcements</span>
+                        </div>
+                        <div class="func-arrow">→</div>
+                    </a>
+                </div>
+
+                <div class="bottom-row fade-up delay-4">
+                    <div class="grade-card">
+                        <div class="card-header">
+                            <div class="card-header-title">📊 最近成绩<span id="portalYearMin" class="muted-micro"></span></div>
+                            <a class="card-header-action" href="#grades">查看全部 →</a>
+                        </div>
+                        <div id="portalRecentGradesWrap">
+                            <table class="grade-table">
+                                <thead><tr><th>课程名称</th><th>学分</th><th>学期</th><th>成绩</th></tr></thead>
+                                <tbody id="portalRecentGradesTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div id="portalAvatarArea" class="info-avatar-section"></div>
+                        <div class="info-list">
+                            <div class="info-row"><span class="ik">院系</span><span class="iv" id="portalInfoDept"></span></div>
+                            <div class="info-row"><span class="ik">年级</span><span class="iv" id="portalInfoGrade"></span></div>
+                            <div class="info-row"><span class="ik">入学年份</span><span class="iv" id="portalInfoEnrollYear"></span></div>
+                            <div class="info-row"><span class="ik">性别</span><span class="iv" id="portalInfoGender"></span></div>
+                            <div class="info-row"><span class="ik">邮箱</span><span class="iv" id="portalInfoEmail"></span></div>
+                            <div class="info-row"><span class="ik">手机</span><span class="iv" id="portalInfoPhone"></span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- 修改密码（change_pwd.html 内容） -->
+            <section id="page-change-pwd" style="display:none;">
+                <div class="pwd-tips-card fade-up">
+                    <div class="tips-icon">🛡</div>
+                    <div class="tips-body">
+                        <div class="tips-title">密码安全建议</div>
+                        <div class="tips-list">
+                            至少 6 位，包含大小写字母与数字，避免使用生日或学号，并定期更换。
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pwdAlerts" role="status" aria-live="polite" aria-atomic="true"></div>
+
+                <div class="pwd-card fade-up delay-1">
+                    <div class="pwd-card-title">🔒 修改登录密码</div>
+                    <form action="api/change_pwd.php" method="POST" id="pwdForm" class="pwd-form" autocomplete="off" aria-label="修改登录密码表单">
+                        <div class="form-row">
+                            <label class="form-label" for="oldPwd">当前密码</label>
+                            <div class="input-wrap">
+                                <input class="form-input" type="password" id="oldPwd"
+                                       name="old_password" placeholder="请输入当前密码"
+                                       autocomplete="current-password">
+                                <button type="button" class="eye-btn" data-target="oldPwd" title="显示/隐藏">👁</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label" for="newPwd">新密码</label>
+                            <div class="input-wrap">
+                                <input class="form-input" type="password" id="newPwd"
+                                       name="new_password" placeholder="至少 6 位"
+                                       autocomplete="new-password">
+                                <button type="button" class="eye-btn" data-target="newPwd" title="显示/隐藏">👁</button>
+                            </div>
+                            <div class="strength-bar-wrap">
+                                <div class="strength-bar" id="strengthBar"></div>
+                            </div>
+                            <div class="strength-label" id="strengthLabel"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label" for="confPwd">确认新密码</label>
+                            <div class="input-wrap">
+                                <input class="form-input" type="password" id="confPwd"
+                                       name="confirm_password" placeholder="再次输入新密码"
+                                       autocomplete="new-password">
+                                <button type="button" class="eye-btn" data-target="confPwd" title="显示/隐藏">👁</button>
+                            </div>
+                            <div class="match-hint" id="matchHint"></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">确认修改</button>
+                            <a href="#profile" class="btn btn-outline">取消</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="pwd-note fade-up delay-2">
+                    <span class="note-icon">ℹ</span>
+                    密码修改成功后当前登录状态保持不变，下次登录请使用新密码。
+                </div>
+            </section>
+
+            <!-- 个人信息（profile.html 内容） -->
+            <section id="page-profile" style="display:none;">
+                <div id="profileLoading" class="page-loading" aria-live="polite"> 
+                    <div class="spinner" role="status" aria-hidden="true"></div>
+                    正在加载个人信息...
+                </div>
+                <div class="profile-top fade-up" id="avatar">
+                    <div class="profile-avatar-wrap">
+                        <img class="profile-avatar-img" id="avatarPreview" src="" alt="当前头像" style="display:none">
+                        <div class="profile-avatar-placeholder" id="avatarPlaceholder" style="display:none"></div>
+                            <div class="avatar-overlay" id="avatarOverlay" title="点击更换头像" role="button" tabindex="0" aria-label="更换头像">📷</div>
+                    </div>
+                    <div class="profile-top-info">
+                        <div class="pt-name" id="ptName"></div>
+                        <div class="pt-id" id="ptId"></div>
+                        <div class="pt-dept" id="ptDept"></div>
+                        <div class="pt-status" id="ptStatus"><span class="status-dot-mark">●</span> <span id="ptStatusText"></span></div>
+                    </div>
+                </div>
+
+                <form class="avatar-form fade-up" id="avatarForm"
+                    action="api/profile.php" method="POST" enctype="multipart/form-data" aria-label="上传头像表单">
+                    <div class="avatar-form-inner">
+                        <label class="avatar-file-label" for="avatarInput">
+                            选择图片（JPG / PNG / GIF / WEBP，≤ 2MB）
+                        </label>
+                        <input type="file" id="avatarInput" name="avatar"
+                               accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+                        <button type="submit" class="btn-primary" id="avatarSubmit" disabled>上传头像</button>
+                        <button type="button" class="btn btn-outline" id="avatarCancel">取消</button>
+                    </div>
+                    <div class="avatar-preview-row" id="avatarPreviewRow" style="display:none">
+                        <img id="avatarNewPreview" src="" alt="预览">
+                        <span id="avatarFileName"></span>
+                    </div>
+                </form>
+
+                <div class="profile-section fade-up delay-1">
+                    <div class="ps-title">📋 基础信息 <span class="ps-hint">（以下字段由管理员维护，不可自行修改）</span></div>
+                    <div class="info-grid">
+                        <div class="ig-row"><span class="ig-k">姓名</span><span class="ig-v" id="igName"></span></div>
+                        <div class="ig-row"><span class="ig-k">学号</span><span class="ig-v mono" id="igStudentId"></span></div>
+                        <div class="ig-row"><span class="ig-k">性别</span><span class="ig-v" id="igGender"></span></div>
+                        <div class="ig-row"><span class="ig-k">院系</span><span class="ig-v" id="igDept"></span></div>
+                        <div class="ig-row"><span class="ig-k">年级</span><span class="ig-v" id="igGrade"></span></div>
+                        <div class="ig-row"><span class="ig-k">入学年份</span><span class="ig-v" id="igEnrollYear"></span></div>
+                        <div class="ig-row"><span class="ig-k">账号状态</span>
+                            <span class="ig-v">
+                                <span class="status-pill" id="statusPill"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contactAlerts" role="status" aria-live="polite" aria-atomic="true"></div>
+
+                <div class="profile-section fade-up delay-2">
+                    <div class="ps-title">📬 联系方式 <span class="ps-hint">（可自行修改）</span></div>
+                    <form action="api/profile.php" method="POST" class="edit-form" id="infoForm" aria-label="更新联系方式表单">
+                        <input type="hidden" name="action" value="update_info">
+                        <div class="form-row">
+                            <label class="form-label" for="phoneInput">手机号码</label>
+                            <input class="form-input" type="tel" id="phoneInput" name="phone"
+                                   inputmode="numeric" maxlength="11" pattern="\d{11}" title="请输入11位数字手机号"
+                                   value="" placeholder="请输入11位数字手机号">
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                            <button type="button" class="btn btn-outline" onclick="resetInfoForm()">撤销更改</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="profile-section fade-up delay-3">
+                    <div class="ps-title">🔗 其他操作</div>
+                    <div class="quick-links">
+                        <a class="quick-link-card" href="#change_pwd">
+                            <span class="ql-icon">🔒</span>
+                            <div>
+                                <div class="ql-title">修改密码</div>
+                                <div class="ql-desc">定期更换密码，保障账号安全。</div>
+                            </div>
+                            <span class="ql-arrow">→</span>
+                        </a>
+                        <a class="quick-link-card" href="#portal">
+                            <span class="ql-icon">🏠</span>
+                            <div>
+                                <div class="ql-title">返回首页</div>
+                                <div class="ql-desc">查看学业概览与功能导航。</div>
+                            </div>
+                            <span class="ql-arrow">→</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 课程表（schedule.html 内容） -->
+            <section id="page-schedule" style="display:none;">
+                <div class="semester-banner fade-up" id="semesterBanner" style="display:none;">
+                    <div class="sb-item">
+                        <div class="sb-label">当前学期</div>
+                        <div class="sb-val" id="semesterLabel"></div>
+                    </div>
+                </div>
+
+                <div class="schedule-toolbar schedule-toolbar-shell fade-up delay-1" id="scheduleToolbar" style="display:none;">
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" id="btn-tt">📇 课程表视图</button>
+                        <button class="toggle-btn" id="btn-ov">📋 课程列表</button>
+                    </div>
+
+                    <div class="toolbar-actions schedule-center-actions">
+                        <button class="btn btn-outline" id="exportScheduleBtn" title="导出课表到 Excel" aria-label="导出课表到 Excel">📥 导出 Excel</button>
+                    </div>
+
+                    <div id="week-controls" class="week-controls">
+                        <div class="week-nav">
+                            <button class="week-nav-btn" id="btn-prev" title="上一周">‹</button>
+                            <div class="week-label-box" id="week-label">全部学期</div>
+                            <button class="week-nav-btn" id="btn-next" title="下一周">›</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-timetable" class="fade-up delay-2" style="display:none;">
+                    <div class="schedule-wrap">
+                        <div class="table-scroll">
+                            <div class="timetable" id="timetable"></div>
+                        </div>
+                    </div>
+
+                    <div class="week-note">
+                        <span class="dot"></span>
+                        <span id="week-note-text">显示全部学期，各课程块标注起止周。</span>
+                    </div>
+                </div>
+
+                <div id="view-overview" style="display:none;" class="fade-up delay-2">
+                    <div class="overview-list" id="overviewList"></div>
+                </div>
+            </section>
+
+            <!-- 空闲教室检测 -->
+            <section id="page-free-classroom" style="display:none;">
+                <div class="free-room-hero fade-up">
+                    <div>
+                        <div class="free-room-kicker">Smart Room Finder</div>
+                        <h2 class="free-room-title">空闲教室检测</h2>
+            
+                    </div>
+                    <div class="free-room-term" id="freeRoomTermHint">当前查询学期：加载中...</div>
+                </div>
+
+
+
+                <div id="freeRoomAlerts" role="status" aria-live="polite" aria-atomic="true"></div>
+
+                <div id="freeRoomLoading" class="page-loading" style="display:none;">
+                    <div class="spinner" role="status" aria-hidden="true"></div>
+                    正在加载教室与节次信息...
+                </div>
+
+                <div class="free-room-card fade-up delay-1">
+                    <form id="freeRoomForm" class="free-room-form" aria-label="空闲教室检测表单">
+                        <div class="free-room-grid-form">
+                            <div class="free-room-field">
+                                <label for="frWeek">周次</label>
+                                <select id="frWeek" class="form-input"></select>
+                            </div>
+                            <div class="free-room-field">
+                                <label for="frDay">星期</label>
+                                <select id="frDay" class="form-input">
+                                    <option value="1">星期一</option>
+                                    <option value="2">星期二</option>
+                                    <option value="3">星期三</option>
+                                    <option value="4">星期四</option>
+                                    <option value="5">星期五</option>
+                                    <option value="6">星期六</option>
+                                    <option value="7">星期日</option>
+                                </select>
+                            </div>
+                            <div class="free-room-field">
+                                <label for="frSlotStart">开始节次</label>
+                                <select id="frSlotStart" class="form-input"></select>
+                            </div>
+                            <div class="free-room-field">
+                                <label for="frSlotEnd">结束节次</label>
+                                <select id="frSlotEnd" class="form-input"></select>
+                            </div>
+                            <div class="free-room-field free-room-field-wide">
+                                <label for="frClassroom">教室</label>
+                                <select id="frClassroom" class="form-input"></select>
+                            </div>
+                        </div>
+                        <div class="free-room-actions">
+                            <button type="submit" class="btn btn-primary" id="freeRoomSubmit">开始检测</button>
+                            <button type="button" class="btn btn-outline" id="freeRoomReset">重置条件</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="freeRoomSummary" class="fade-up delay-2"></div>
+                <div id="freeRoomResults" class="fade-up delay-3"></div>
+            </section>
+
+            <!-- 选课系统（course_select.html 内容） -->
+            <section id="page-course" style="display:none;">
+                <div class="cs-overview-card fade-up">
+                    <div class="cs-ov-left">
+                        <div class="cs-ov-title">本学期选课概览</div>
+                        <div class="cs-ov-desc" id="ovDesc"><span data-config="term.current_year">2026</span> · <span data-config="term.current_semester_cn">春季学期</span></div>
+                    </div>
+                    <div class="cs-ov-right">
+                        <div class="cs-stat">
+                            <span class="cs-val" id="myCourseCount">0</span>
+                            <span class="cs-label">已选门数</span>
+                        </div>
+                        <div class="cs-divider"></div>
+                        <div class="cs-stat">
+                            <span class="cs-val" id="myCredits">0.0</span>
+                            <span class="cs-label">已选学分</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-row">
+
+                    <div class="cs-card fade-up delay-1">
+                        <div class="card-header">
+                            <div class="card-header-title">📚 可选课程大全</div>
+                            <div class="course-count-meta">共 <span id="availableCount">0</span> 门开放</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="cs-table">
+                                <thead>
+                                    <tr>
+                                        <th>课程名称</th>
+                                        <th>授课教师</th>
+                                        <th>学分</th>
+                                        <th>余量 / 容量</th>
+                                        <th>选课时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="availableTbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="cs-card fade-up delay-2">
+                        <div class="card-header">
+                            <div class="card-header-title">🎓 我的选课</div>
+                        </div>
+                        <div id="myCourseContainer"></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- 成绩查询（my_grades.html 内容） -->
+            <section id="page-grades" style="display:none;">
+                <div class="gpa-hero fade-up">
+                    <div class="gpa-circle-wrap">
+                        <svg class="gpa-arc" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="50" class="arc-bg"/>
+                            <circle id="arc-fg" cx="60" cy="60" r="50" class="arc-fg"
+                                style="stroke:var(--ink-muted);stroke-dasharray:314.16;stroke-dashoffset:314.16"/>
+                        </svg>
+                        <div class="gpa-center">
+                            <div class="gpa-val" id="gpaVal"></div>
+                            <div class="gpa-max">/ 4.00</div>
+                        </div>
+                    </div>
+                    <div class="gpa-details">
+                        <div class="gpa-title">综合 GPA
+                            <span class="gpa-sem-tag" id="gpaSemTag">全部学期</span>
+                        </div>
+                        <div class="gpa-sub">加权 GPA = Σ(学分 × 绩点) ÷ 总学分，仅期末成绩计入，并随学期筛选联动。</div>
+                        <div class="gpa-tags">
+                            <div class="gpa-tag">
+                                <span class="gt-val" id="totalCredit">0.0</span>
+                                <span class="gt-label">统计学分</span>
+                            </div>
+                            <div class="gpa-tag">
+                                <span class="gt-val" id="finalCount">0</span>
+                                <span class="gt-label">期末成绩</span>
+                            </div>
+                            <div class="gpa-tag">
+                                <span class="gt-val" id="allCount">0</span>
+                                <span class="gt-label">全部成绩</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grades-filter-bar fade-up delay-1">
+                    <span class="filter-label">学期</span>
+                    <div class="filter-tabs" id="filterTabs"></div>
+                    <div class="filter-count">共 <strong id="gradesCount">0</strong> 条</div>
+                    <a class="reset-sort-btn" href="#" id="resetSortBtn" style="visibility:hidden">× 清除排序</a>
+                    <button id="exportGradesBtn" class="btn btn-outline with-left-gap" title="导出到 Excel">📥 导出 Excel</button>
+                </div>
+
+                <div class="grades-table-header fade-up delay-2" id="gradesTableHeader">
+                    <div>类型</div>
+                    <div>课程名称</div>
+                    <div class="col-center"><a class="sort-th-link" href="#" data-col="credit">学分 <span class="sort-icon inactive">↕</span></a></div>
+                    <div class="col-center"><a class="sort-th-link" href="#" data-col="score">成绩 <span class="sort-icon inactive">↕</span></a></div>
+                    <div class="col-center"><a class="sort-th-link" href="#" data-col="gpa">绩点 <span class="sort-icon inactive">↕</span></a></div>
+                </div>
+
+                <div class="grades-list fade-up delay-3" id="gradesList"></div>
+
+                <div class="gpa-summary-bar fade-up delay-4">
+                    <span>
+                        共 <strong id="gpaSummaryCount">0</strong> 条记录
+                        其中 <strong id="gpaSummaryFinalCount">0</strong> 条参与 GPA 计算
+                        加权 GPA <strong id="gpaSummaryGpa">0.00</strong>
+                    </span>
+                    <span class="gpa-note">复核成绩可联系教务处电话 <strong data-config="office_phone">12345678</strong></span>
+                </div>
+            </section>
+
+            <!-- 考试安排（exam_info.html 内容） -->
+            <section id="page-exam" style="display:none;">
+                <div class="page-hero fade-up">
+                    <div class="ph-icon">📝</div>
+                    <div class="ph-text">
+                        <div class="ph-title">考试安排</div>
+                        <div class="ph-sub">
+                            <span id="semTitle"></span> 学期，
+                            查看本学期已选课程的考试类型、日期与考场信息
+                        </div>
+                    </div>
+                    <div class="ph-stats">
+                        <div class="ph-stat">
+                            <span class="ph-val" id="statsTotal">0</span>
+                            <span class="ph-label">本学期考试</span>
+                        </div>
+                        <div class="ph-divider"></div>
+                        <div class="ph-stat">
+                            <span class="ph-val" id="statsUpcoming">0</span>
+                            <span class="ph-label">即将到来</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exam-stats-row fade-up delay-1">
+                    <div class="exam-stat-card esc-rose">
+                        <div class="esc-icon">🎯</div>
+                        <div class="esc-val" id="statFinal">0</div>
+                        <div class="esc-label">期末考试</div>
+                    </div>
+                    <div class="exam-stat-card esc-gold">
+                        <div class="esc-icon">📖</div>
+                        <div class="esc-val" id="statMidterm">0</div>
+                        <div class="esc-label">期中考试</div>
+                    </div>
+                    <div class="exam-stat-card esc-jade">
+                        <div class="esc-icon">✏️</div>
+                        <div class="esc-val" id="statQuiz">0</div>
+                        <div class="esc-label">平时测验</div>
+                    </div>
+                    <div class="exam-stat-card esc-blue">
+                        <div class="esc-icon">🧾</div>
+                        <div class="esc-val" id="statUpcoming">0</div>
+                        <div class="esc-label">即将到来</div>
+                    </div>
+                </div>
+
+                <div class="filter-bar fade-up delay-2">
+                    <div class="filter-group">
+                        <span class="filter-label">学期</span>
+                        <div class="filter-tabs" id="filterTabsSemesters"></div>
+                    </div>
+                    <div class="filter-group">
+                        <span class="filter-label">状态</span>
+                        <div class="filter-tabs" id="filterTabsStatus"></div>
+                    </div>
+                    <div class="filter-count">共 <strong id="filterCount">0</strong> 条记录</div>
+                </div>
+
+                <div id="emptyState" class="empty-state fade-up delay-3" style="display:none">
+                    <div class="es-icon">📭</div>
+                    <div>本学期暂无考试安排记录</div>
+                </div>
+
+                <div id="examList" class="exam-list fade-up delay-3"></div>
+
+                <div class="exam-notice fade-up delay-4">
+                    <div class="notice-icon">ℹ</div>
+                    <div class="notice-text">考试安排如有变动，以教务处通知为准。如有疑问请联系教务处 <strong data-config="office_phone">12345678</strong></div>
+                </div>
+            </section>
+
+            <!-- 通知公告 -->
+            <section id="page-announcement" style="display:none;">
+                <div class="page-hero announcement-hero fade-up">
+                    <div class="announcement-hero-icon">📢</div>
+                    <div>
+                        <h2 class="announcement-hero-title">通知公告</h2>
+                        <p class="announcement-hero-subtitle">查看您的重要课程与系统通知</p>
+                    </div>
+                </div>
+
+                <div class="filter-bar announcement-filter fade-up delay-1">
+                    <input id="annSearch" class="form-input announcement-search" type="search" placeholder="搜索公告标题或内容" />
+                    <!-- 每页固定 10 条，移除显示标签 -->
+                    <button class="btn btn-ghost btn-sm" id="annSearchBtn">🔍 搜索</button>
+                    <button class="btn btn-ghost btn-sm" onclick="initAnnouncement()">🔄 刷新公告</button>
+                </div>
+
+                <div id="annEmptyState" class="empty-state announcement-empty fade-up delay-2" style="display:none;">
+                    <div class="empty-icon">📭</div>
+                    <div class="announcement-empty-title">暂无任何通知公告</div>
+                    <div class="announcement-empty-text">有新的公告时会显示在这里。</div>
+                </div>
+
+                <div id="annList" class="announcement-list fade-up delay-2"></div>
+                <div id="annPagination" class="announcement-pagination"></div>
+            </section>
+
+        </div>
+    </div><!-- /content -->
+</main>
+
+<!-- 悬浮提示 -->
+<div class="course-tooltip" id="tooltip" role="tooltip" aria-hidden="true" style="display:none;">
+    <div class="ct-title" id="tt-name"></div>
+    <div class="ct-row"   id="tt-day"></div>
+    <div class="ct-row"   id="tt-time"></div>
+    <div class="ct-row"   id="tt-room"></div>
+    <div class="ct-row"   id="tt-teacher"></div>
+    <div class="ct-row"   id="tt-weeks"></div>
+    <div class="ct-row"   id="tt-credit"></div>
+</div>
+
+<!-- 退出登录自定义弹窗 -->
+<div id="logoutModal" class="custom-modal" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="logoutModalTitle">
+    <div class="custom-modal-backdrop" onclick="hideLogoutModal()"></div>
+    <div class="custom-modal-content custom-modal-content-sm custom-modal-centered fade-up">
+        <div class="modal-symbol">🚪</div>
+        <h3 id="logoutModalTitle" class="modal-title-text">提示</h3>
+        <p class="modal-muted-text">确定要退出登录吗？</p>
+        <div class="modal-action-row">
+            <button class="btn-primary btn-bright confirm-strong modal-action-fill" id="confirmLogoutBtn">确定退出</button>
+            <button class="btn btn-outline modal-action-fill" onclick="hideLogoutModal()">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 公告详情弹窗 -->
+<div id="announcementModal" class="custom-modal" style="display:none;" aria-modal="true" role="dialog" aria-labelledby="annModalTitle">
+    <div class="custom-modal-backdrop" onclick="hideAnnouncementModal()"></div>
+    <div class="custom-modal-content announcement-modal-content fade-up">
+        <button class="modal-close-btn" onclick="hideAnnouncementModal()" aria-label="关闭公告详情">&times;</button>
+        <h2 id="annModalTitle" class="announcement-modal-title">公告标题</h2>
+        <div class="announcement-modal-meta">
+            <div><span class="meta-label">发送人：</span><span id="annModalSender"></span> <span class="meta-separator">|</span> <span class="meta-label">接收群体：</span><span id="annModalReceiver"></span></div>
+            <div id="annModalDate" class="announcement-modal-date"></div>
+        </div>
+        <div id="annModalContent" class="announcement-modal-body">公告正文</div>
+        <div class="announcement-modal-footer">
+            <button class="btn-primary" onclick="hideAnnouncementModal()">关闭</button>
+        </div>
+    </div>
+</div>
+<script>
+let pendingLogoutUrl = '';
+    window.showLogoutModal = function(url) {
+    pendingLogoutUrl = url || (window.studentGetLogoutUrl ? window.studentGetLogoutUrl() : '../login/logout.php');
+    const modal = document.getElementById('logoutModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            const content = modal.querySelector('.custom-modal-content');
+            if(content) content.style.opacity = '1';
+        }, 10);
+    }
+};
+window.hideLogoutModal = function() {
+    const modal = document.getElementById('logoutModal');
+    if (modal) modal.style.display = 'none';
+};
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('confirmLogoutBtn');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            window.location.href = pendingLogoutUrl;
+        });
+    }
+});
+</script>
+
+<script>
+(function () {
+    var paths = window.APP_PATHS || {};
+    var assets = paths.assets || {};
+    var versions = paths.versions || {};
+    var cdn = paths.cdn || {};
+
+    function withVersion(url, version) {
+        if (!url || !version) {
+            return url;
+        }
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + version;
+    }
+
+    [
+        ['student_clock_js', 'js/clock.js'],
+        ['student_app_paths_js', 'js/app_paths.js'],
+        ['student_config_js', 'js/student_config.js'],
+        ['student_app_api_js', 'js/app_api.js']
+    ].forEach(function (entry) {
+        var key = entry[0];
+        var fallback = entry[1];
+        var src = withVersion(assets[key] || fallback, versions[key] || '');
+        document.write('<script src="' + src.replace(/"/g, '&quot;') + '"><\/script>');
+    });
+})();
+</script>
+<script>window.__SINGLE_PAGE_APP = true;</script>
+<script>
+(function () {
+    var paths = window.APP_PATHS || {};
+    var assets = paths.assets || {};
+    var versions = paths.versions || {};
+    var cdn = paths.cdn || {};
+
+    function withVersion(url, version) {
+        if (!url || !version) {
+            return url;
+        }
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + version;
+    }
+
+    [
+        ['student_sidebar_js', 'js/student_sidebar.js'],
+        ['student_profile_js', 'js/profile.js'],
+        ['student_schedule_js', 'js/schedule.js'],
+        ['student_free_classroom_js', 'js/free_classroom.js'],
+        ['student_exam_info_js', 'js/exam_info.js'],
+        ['student_my_grades_js', 'js/my_grades.js'],
+        ['student_course_select_js', 'js/course_select.js'],
+        ['student_portal_js', 'js/student_portal.js'],
+        ['student_change_pwd_js', 'js/change_pwd.js'],
+        ['student_announcement_js', 'js/student_announcement.js']
+    ].forEach(function (entry, index) {
+        if (index === 5) {
+            var xlsxSrc = cdn.xlsx_js || 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+            document.write('<script src="' + xlsxSrc.replace(/"/g, '&quot;') + '"><\/script>');
+        }
+
+        var key = entry[0];
+        var fallback = entry[1];
+        var src = withVersion(assets[key] || fallback, versions[key] || '');
+        document.write('<script src="' + src.replace(/"/g, '&quot;') + '"><\/script>');
+    });
+})();
+</script>
+
+<script>
+// 简单 hash 路由与按需初始化（扩展：支持课表、成绩、考试页面）
+(function(){
+    const profileEl = document.getElementById('page-profile');
+    const portalEl = document.getElementById('page-portal');
+    const scheduleEl = document.getElementById('page-schedule');
+    const freeClassroomEl = document.getElementById('page-free-classroom');
+    const courseEl = document.getElementById('page-course');
+    const gradesEl = document.getElementById('page-grades');
+    const examEl = document.getElementById('page-exam');
+    const announcementEl = document.getElementById('page-announcement');
+    const changePwdEl = document.getElementById('page-change-pwd');
+    const titleEl = document.querySelector('.view-title');
+
+    // 监听全局 alert 容器，使新插入的提醒能够自动消失
+    const globalAlertsContainer = document.getElementById('alertsContainer');
+    if (globalAlertsContainer) {
+        const alertObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) {
+                        var targets = [];
+                        if (node.className && (node.className.indexOf('alert-success') > -1 || node.className.indexOf('alert-error') > -1)) {
+                            targets.push(node);
+                        }
+                        var children = node.querySelectorAll ? node.querySelectorAll('.alert-success, .alert-error') : [];
+                        children.forEach(function(c) { targets.push(c); });
+                        
+                        targets.forEach(function(t) {
+                            setTimeout(function() {
+                                t.style.transition = 'opacity 0.6s ease';
+                                t.style.opacity = '0';
+                                setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 600);
+                            }, 5000);
+                        });
+                    }
+                });
+            });
+        });
+        alertObserver.observe(globalAlertsContainer, { childList: true, subtree: true });
+    }
+
+    let profileInited = false;
+    let portalInited = false;
+    let scheduleInited = false;
+    let freeClassroomInited = false;
+    let changePwdInited = false;
+    let announcementInited = false;
+    let currentView = null;
+    let appBootRevealed = false;
+
+    function revealMainAfterFirstRoute(){
+        if (appBootRevealed) return;
+        appBootRevealed = true;
+        if (window.requestAnimationFrame) {
+            window.requestAnimationFrame(function(){
+                document.body.classList.remove('app-booting');
+            });
+        } else {
+            document.body.classList.remove('app-booting');
+        }
+    }
+
+    function updateSidebarActive(view){
+        const sidebar = document.getElementById('sidebar-container');
+        if (!sidebar) return;
+        const items = sidebar.querySelectorAll('a.nav-item');
+        if (!items) return;
+        items.forEach(a=>{
+            const href = (a.getAttribute('href')||'').toLowerCase();
+            let isActive = false;
+            if (view === 'profile' && (href.indexOf('#profile') !== -1 || href.indexOf('profile.html') !== -1)) isActive = true;
+            if (view === 'portal' && (href.indexOf('#portal') !== -1 || href.indexOf('student_portal.html') !== -1)) isActive = true;
+            if (view === 'schedule' && (href.indexOf('#schedule') !== -1 || href.indexOf('schedule.html') !== -1)) isActive = true;
+            if (view === 'free_classroom' && (href.indexOf('#free_classroom') !== -1 || href.indexOf('free_classroom.html') !== -1)) isActive = true;
+            if (view === 'course' && (href.indexOf('#course') !== -1 || href.indexOf('course_select.html') !== -1 || href.indexOf('course_select') !== -1)) isActive = true;
+            if (view === 'grades' && (href.indexOf('#grades') !== -1 || href.indexOf('my_grades.html') !== -1 || href.indexOf('my_grades') !== -1)) isActive = true;
+            if (view === 'exam' && (href.indexOf('#exam') !== -1 || href.indexOf('exam_info.html') !== -1 || href.indexOf('exam_info') !== -1)) isActive = true;
+            if (view === 'announcement' && (href.indexOf('#announcement') !== -1 || href.indexOf('announcement.html') !== -1)) isActive = true;
+            if (view === 'change_pwd' && (href.indexOf('#change_pwd') !== -1 || href.indexOf('change_pwd.html') !== -1 || href.indexOf('change_pwd') !== -1)) isActive = true;
+            if (isActive) a.classList.add('active'); else a.classList.remove('active');
+        });
+    }
+
+    function show(view){
+        currentView = view;
+        // update top-left title mapping
+        const titleMap = { portal: '学生门户', profile: '个人信息', schedule: '课程表', free_classroom: '空闲教室', course: '选课系统', grades: '成绩查询', exam: '考试安排', announcement: '通知公告', change_pwd: '修改密码' };
+        if (titleEl) titleEl.textContent = titleMap[view] || '学生门户';
+
+        // hide all
+        [profileEl, portalEl, scheduleEl, freeClassroomEl, courseEl, gradesEl, examEl, announcementEl, changePwdEl].forEach(el=>{ if (el) el.style.display = 'none'; });
+
+        // 离开个人信息页时清除页面内的临时提示（避免在其它页面看到过期的提示）
+        try {
+            if (view !== 'profile') {
+                var ca = document.getElementById('contactAlerts');
+                if (ca) ca.innerHTML = '';
+            }
+            if (view !== 'change_pwd') {
+                var pad = document.getElementById('pwdAlerts');
+                if (pad) pad.innerHTML = '';
+            }
+            // 切换页面时，全局 alert 也清空（确保切换页面后消失）
+            var globalAlerts = document.getElementById('alertsContainer');
+            if (globalAlerts) {
+                globalAlerts.innerHTML = '';
+            }
+        } catch (e) {}
+
+        // show selected and init
+        if (view === 'portal'){
+            if (portalEl) portalEl.style.display = '';
+            if (!portalInited){ if (window.initStudentPortal) window.initStudentPortal(); portalInited = true; }
+        } else if (view === 'schedule'){
+            if (scheduleEl) scheduleEl.style.display = '';
+            if (!scheduleInited){ if (window.initScheduleData) window.initScheduleData(); if (window.initScheduleUI) window.initScheduleUI(); scheduleInited = true; }
+        } else if (view === 'free_classroom'){
+            if (freeClassroomEl) freeClassroomEl.style.display = '';
+            if (!freeClassroomInited){ if (window.initFreeClassroomPage) window.initFreeClassroomPage(); freeClassroomInited = true; }
+            else { if (window.initFreeClassroomPage) window.initFreeClassroomPage(); }
+        } else if (view === 'course'){
+            if (courseEl) courseEl.style.display = '';
+            if (window.initCourseSelect) window.initCourseSelect();
+        } else if (view === 'grades'){
+            if (gradesEl) gradesEl.style.display = '';
+            if (window.initGradesData) {
+                Promise.resolve(window.initGradesData()).then(()=>{ if (window.initGradesUI) window.initGradesUI(); });
+            }
+        } else if (view === 'exam'){
+            if (examEl) examEl.style.display = '';
+            if (window.initExamPage) window.initExamPage();
+        } else if (view === 'announcement'){
+            if (announcementEl) announcementEl.style.display = '';
+            if (!announcementInited) { if (window.initAnnouncement) window.initAnnouncement(); announcementInited = true; }
+        } else if (view === 'change_pwd'){
+            if (changePwdEl) changePwdEl.style.display = '';
+            // change_pwd.js binds handlers on load; if an explicit init exists, call it
+            if (!changePwdInited){ if (window.initChangePwd) window.initChangePwd(); changePwdInited = true; }
+        } else if (view === 'profile') {
+            if (profileEl) profileEl.style.display = '';
+            if (!profileInited){ if (window.initProfilePage) window.initProfilePage(); profileInited = true; }
+            try { if (window.refreshProfileData) window.refreshProfileData(); } catch (e) {}
+        } else {
+            // fallback: portal
+            if (portalEl) portalEl.style.display = '';
+            if (!portalInited){ if (window.initStudentPortal) window.initStudentPortal(); portalInited = true; }
+        }
+
+        // update sidebar highlight (if sidebar already injected)
+        try { updateSidebarActive(view); } catch (e) {}
+
+        // Programmatic focus removed to prevent visible focus rectangle on refresh.
+        // If assistive technology focus is required later, re-enable conditionally.
+        try {
+            var vtitle = document.getElementById('viewTitle');
+            // if (vtitle) vtitle.focus();
+        } catch (e) {}
+
+        revealMainAfterFirstRoute();
+    }
+
+    function router(){
+        const h = (location.hash||'').replace('#','');
+        if (!h) {
+            location.hash = '#portal';
+            return;
+        }
+        show(h);
+    }
+
+    // observe sidebar container so when server-rendered sidebar is injected we can update highlight
+    (function(){
+        const containerId = 'sidebar-container';
+
+        function initSidebarToggle() {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const sidebar = container.querySelector('.sidebar');
+            if (!sidebar) return;
+            if (sidebar.dataset.collapseInit) return;
+            sidebar.dataset.collapseInit = '1';
+
+            let btn = sidebar.querySelector('#sidebarToggleBtn');
+            if (!btn) {
+                const logo = sidebar.querySelector('.sidebar-logo');
+                if (logo) {
+                    btn = document.createElement('button');
+                    btn.id = 'sidebarToggleBtn';
+                    btn.className = 'sidebar-toggle';
+                    btn.title = '切换侧栏显示';
+                    btn.textContent = '‹';
+                    logo.appendChild(btn);
+                }
+            }
+            if (!btn) return;
+            btn.type = 'button';
+
+            var setState = function(collapsed) {
+                if (collapsed) {
+                    document.body.classList.add('sidebar-collapsed');
+                    btn.textContent = '›';
+                    btn.dataset.sidebarState = 'collapsed';
+                    btn.setAttribute('aria-pressed', 'true');
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.setAttribute('aria-label', '展开侧栏');
+                    btn.title = '展开侧栏';
+                } else {
+                    document.body.classList.remove('sidebar-collapsed');
+                    btn.textContent = '‹';
+                    btn.dataset.sidebarState = 'expanded';
+                    btn.setAttribute('aria-pressed', 'false');
+                    btn.setAttribute('aria-expanded', 'true');
+                    btn.setAttribute('aria-label', '折叠侧栏');
+                    btn.title = '折叠侧栏';
+                }
+
+                // 为屏读器管理可见文本（当折叠时仅隐藏文本，不隐藏图标）
+                try {
+                    const hideSelectors = [
+                        '.sidebar-logo .school-name',
+                        '.sidebar-logo .portal-tag',
+                        '.sidebar-profile .pname',
+                        '.sidebar-profile .pid',
+                        '.nav-section-label',
+                        '.nav-item .nav-text'
+                    ];
+                    hideSelectors.forEach(sel => {
+                        const nodes = sidebar.querySelectorAll(sel);
+                        nodes.forEach(n => {
+                            n.setAttribute('aria-hidden', collapsed ? 'true' : 'false');
+                        });
+                    });
+                } catch (e) {}
+            };
+
+            var collapsed = localStorage.getItem('sidebarCollapsed') === '1';
+            setState(collapsed);
+
+            // ensure accessibility attributes
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('tabindex', '0');
+
+            btn.addEventListener('click', function () {
+                var now = !document.body.classList.contains('sidebar-collapsed');
+                setState(now);
+                localStorage.setItem('sidebarCollapsed', now ? '1' : '0');
+                try { updateSidebarActive(currentView || ((location.hash||'') === '#schedule' ? 'schedule' : 'portal')); } catch(e){}
+            });
+            btn.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+                    ev.preventDefault();
+                    btn.click();
+                }
+            });
+        }
+
+        function attachObserver(el){
+            try{
+                const mo = new MutationObserver(()=>{
+                    updateSidebarActive(currentView || ((location.hash||'') === '#schedule' ? 'schedule' : 'portal'));
+                    initSidebarToggle();
+                });
+                mo.observe(el, { childList: true, subtree: true });
+            }catch(e){}
+        }
+
+        const el = document.getElementById(containerId);
+        if (el) { attachObserver(el); initSidebarToggle(); } else {
+            const t = setInterval(()=>{
+                const e2 = document.getElementById(containerId);
+                if (e2){ clearInterval(t); attachObserver(e2); initSidebarToggle(); }
+            }, 200);
+        }
+    })();
+
+    window.addEventListener('hashchange', router);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', router);
+    } else {
+        // 如果脚本在 DOMContentLoaded 之后加载（例如被缓存或通过异步注入），立即执行一次路由。
+        router();
+    }
+    // 当 SPA 已加载时，拦截侧栏和页面内指向 spa.html#... 的链接，避免完整导航。
+    document.addEventListener('click', function (e) {
+        const a = e.target.closest && e.target.closest('a[href]');
+        if (!a) return;
+        if (a.target && a.target !== '' && a.target !== '_self') return;
+        const href = a.getAttribute('href') || '';
+        if (!href) return;
+        const spaPath = window.studentGetSpaUrl ? window.studentGetSpaUrl() : 'spa.html';
+        const resolvedSpaPath = (new URL(spaPath, location.href)).pathname;
+        if (!location.pathname || location.pathname.indexOf(resolvedSpaPath) === -1) return;
+
+        const anchors = ['#portal','#profile','#schedule','#free_classroom','#course','#grades','#exam','#announcement','#change_pwd'];
+        for (const an of anchors){
+            if (href.indexOf(an) !== -1){
+                e.preventDefault();
+                const key = an.replace('#','');
+                if (location.hash !== an) location.hash = an; else show(key);
+                return;
+            }
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
