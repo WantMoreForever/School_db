@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="default avatar">
-  <rect width="200" height="200" rx="20" fill="#e9ecef"/>
-  <g transform="translate(40,30)" fill="#adb5bd">
-    <circle cx="60" cy="30" r="24" />
-    <path d="M4 130c0-33 27-60 56-60h16c29 0 56 27 56 60" />
-  </g>
-</svg>
