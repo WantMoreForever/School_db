@@ -2145,37 +2145,338 @@ DROP PROCEDURE IF EXISTS `sp_project_get_available_sections`;
 delimiter ;;
 CREATE PROCEDURE `sp_project_get_available_sections`(IN p_student_id INT UNSIGNED,
     IN p_year INT,
-    IN p_semester VARCHAR(20))
+    IN p_semester VARCHAR(20),
+    IN p_total_weeks INT)
 BEGIN
     SELECT
-        v.section_id,
-        v.course_name,
-        v.credit,
-        v.primary_teacher_name AS teacher_name,
-        v.capacity,
-        v.enrollment_start,
-        v.enrollment_end,
-        (NOW() BETWEEN v.enrollment_start AND v.enrollment_end) AS is_open,
-        v.enrolled_count,
-        (SELECT COUNT(*) FROM takes tk WHERE tk.section_id = v.section_id AND tk.student_id = p_student_id) AS is_my_course
-    FROM v_project_section_overview v
-    WHERE v.year = p_year
-      AND v.semester = p_semester
-      AND (
-          NOT EXISTS (SELECT 1 FROM restriction r WHERE r.section_id = v.section_id)
-          OR EXISTS (
-              SELECT 1
-              FROM restriction r
-              JOIN student s ON s.major_id = r.major_id
-              WHERE r.section_id = v.section_id
-                AND s.user_id = p_student_id
-          )
-      )
-    ORDER BY v.course_id ASC, v.section_id ASC;
+        x.section_id,
+        x.course_id,
+        x.course_name,
+        x.credit,
+        x.teacher_name,
+        x.capacity,
+        x.enrollment_start,
+        x.enrollment_end,
+        x.is_open,
+        x.enrolled_count,
+        x.is_my_course,
+        x.is_same_course_selected,
+        x.restriction_count,
+        x.allowed_restriction_count,
+        CASE WHEN x.restriction_count > 0 THEN 1 ELSE 0 END AS is_restricted,
+        CASE WHEN x.restriction_count = 0 OR x.allowed_restriction_count > 0 THEN 1 ELSE 0 END AS is_major_allowed,
+        x.conflict_flag,
+        CASE
+            WHEN x.is_my_course > 0 OR x.is_same_course_selected > 0 THEN 0
+            WHEN x.restriction_count > 0 AND x.allowed_restriction_count = 0 THEN 0
+            WHEN x.is_open <> 1 THEN 0
+            WHEN x.capacity <= 0 OR x.enrolled_count >= x.capacity THEN 0
+            WHEN x.conflict_flag > 0 THEN 0
+            ELSE 1
+        END AS can_enroll,
+        CASE
+            WHEN x.is_my_course > 0 OR x.is_same_course_selected > 0 THEN '已选此课'
+            WHEN x.restriction_count > 0 AND x.allowed_restriction_count = 0 THEN '专业限制'
+            WHEN x.is_open <> 1 THEN '不在选课时间'
+            WHEN x.capacity <= 0 OR x.enrolled_count >= x.capacity THEN '名额已满'
+            WHEN x.conflict_flag > 0 THEN '时间冲突'
+            ELSE ''
+        END AS disabled_reason
+    FROM (
+        SELECT
+            sec.section_id,
+            sec.course_id,
+            c.name AS course_name,
+            c.credit,
+            COALESCE(tea.teacher_names, '待定') AS teacher_name,
+            sec.capacity,
+            sec.enrollment_start,
+            sec.enrollment_end,
+            (sec.enrollment_start IS NOT NULL
+             AND sec.enrollment_end IS NOT NULL
+             AND NOW() BETWEEN sec.enrollment_start AND sec.enrollment_end) AS is_open,
+            (SELECT COUNT(*) FROM takes WHERE section_id = sec.section_id) AS enrolled_count,
+            (SELECT COUNT(*) FROM takes WHERE section_id = sec.section_id AND student_id = p_student_id) AS is_my_course,
+            (SELECT COUNT(*)
+             FROM takes tk
+             JOIN section old_sec ON old_sec.section_id = tk.section_id
+             WHERE tk.student_id = p_student_id
+               AND old_sec.year = sec.year
+               AND old_sec.semester = sec.semester
+               AND old_sec.course_id = sec.course_id) AS is_same_course_selected,
+            (SELECT COUNT(*) FROM restriction r WHERE r.section_id = sec.section_id) AS restriction_count,
+            (SELECT COUNT(*)
+             FROM restriction r
+             JOIN student s ON s.major_id = r.major_id AND s.user_id = p_student_id
+             WHERE r.section_id = sec.section_id) AS allowed_restriction_count,
+            (SELECT COUNT(*)
+             FROM schedule sch_new
+             JOIN takes tk ON tk.student_id = p_student_id
+             JOIN section old_sec
+               ON old_sec.section_id = tk.section_id
+              AND old_sec.year = sec.year
+              AND old_sec.semester = sec.semester
+              AND old_sec.section_id <> sec.section_id
+             JOIN schedule sch_old ON sch_old.section_id = old_sec.section_id
+             WHERE sch_new.section_id = sec.section_id
+               AND sch_new.day_of_week = sch_old.day_of_week
+               AND COALESCE(sch_new.week_start, 1) <= COALESCE(sch_old.week_end, p_total_weeks)
+               AND COALESCE(sch_new.week_end, p_total_weeks) >= COALESCE(sch_old.week_start, 1)
+               AND sch_new.start_time < sch_old.end_time
+               AND sch_new.end_time > sch_old.start_time
+             LIMIT 1) AS conflict_flag
+        FROM section sec
+        JOIN course c ON sec.course_id = c.course_id
+        LEFT JOIN (
+            SELECT tg.section_id,
+                   GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR '、') AS teacher_names
+            FROM teaching tg
+            JOIN user u ON u.user_id = tg.teacher_id
+            GROUP BY tg.section_id
+        ) tea ON tea.section_id = sec.section_id
+        WHERE sec.year = p_year
+          AND sec.semester = p_semester
+    ) x
+    ORDER BY x.course_id ASC, x.section_id ASC;
 END
 ;;
 delimiter ;
 
+-- ----------------------------
+-- Procedure structure for sp_project_student_enroll_section
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `sp_project_student_enroll_section`;
+delimiter ;;
+CREATE PROCEDURE `sp_project_student_enroll_section`(IN p_student_id INT UNSIGNED,
+    IN p_section_id INT UNSIGNED,
+    IN p_year INT,
+    IN p_semester VARCHAR(20),
+    IN p_total_weeks INT)
+BEGIN
+    DECLARE v_section_exists INT DEFAULT 0;
+    DECLARE v_student_exists INT DEFAULT 0;
+    DECLARE v_sec_year INT DEFAULT NULL;
+    DECLARE v_sec_semester VARCHAR(20) DEFAULT NULL;
+    DECLARE v_course_id INT UNSIGNED DEFAULT NULL;
+    DECLARE v_capacity INT DEFAULT 0;
+    DECLARE v_is_open INT DEFAULT 0;
+    DECLARE v_student_major INT UNSIGNED DEFAULT NULL;
+    DECLARE v_same_course_count INT DEFAULT 0;
+    DECLARE v_enrolled_count INT DEFAULT 0;
+    DECLARE v_restriction_count INT DEFAULT 0;
+    DECLARE v_allowed_count INT DEFAULT 0;
+    DECLARE v_conflict_count INT DEFAULT 0;
+    DECLARE v_conflict_course_name VARCHAR(255) DEFAULT NULL;
+    DECLARE v_conflict_day INT DEFAULT NULL;
+    DECLARE v_new_start_time TIME DEFAULT NULL;
+    DECLARE v_new_end_time TIME DEFAULT NULL;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 0 AS ok, '选课失败：数据库异常' AS message;
+    END;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*) INTO v_student_exists
+    FROM student
+    WHERE user_id = p_student_id;
+
+    IF v_student_exists = 0 THEN
+        ROLLBACK;
+        SELECT 0 AS ok, '选课失败：未找到学生信息' AS message;
+    ELSE
+        SELECT major_id INTO v_student_major
+        FROM student
+        WHERE user_id = p_student_id
+        LIMIT 1;
+
+        SELECT COUNT(*) INTO v_section_exists
+        FROM section
+        WHERE section_id = p_section_id;
+
+        IF v_section_exists = 0 THEN
+            ROLLBACK;
+            SELECT 0 AS ok, '选课失败：未找到开课节信息' AS message;
+        ELSE
+            SELECT
+                sec.year,
+                sec.semester,
+                sec.course_id,
+                sec.capacity,
+                (sec.enrollment_start IS NOT NULL
+                 AND sec.enrollment_end IS NOT NULL
+                 AND NOW() BETWEEN sec.enrollment_start AND sec.enrollment_end)
+            INTO v_sec_year, v_sec_semester, v_course_id, v_capacity, v_is_open
+            FROM section sec
+            WHERE sec.section_id = p_section_id
+            FOR UPDATE;
+
+            IF v_sec_year <> p_year OR v_sec_semester <> p_semester THEN
+                ROLLBACK;
+                SELECT 0 AS ok, '选课失败：仅允许选择当前学期开课' AS message;
+            ELSEIF v_is_open <> 1 THEN
+                ROLLBACK;
+                SELECT 0 AS ok, '选课失败：当前不在选课时间范围内' AS message;
+            ELSE
+                SELECT COUNT(*) INTO v_same_course_count
+                FROM takes tk
+                JOIN section old_sec ON old_sec.section_id = tk.section_id
+                WHERE tk.student_id = p_student_id
+                  AND old_sec.year = p_year
+                  AND old_sec.semester = p_semester
+                  AND old_sec.course_id = v_course_id;
+
+                IF v_same_course_count > 0 THEN
+                    ROLLBACK;
+                    SELECT 0 AS ok, '选课失败：已经选修过该课程' AS message;
+                ELSE
+                    SELECT COUNT(*) INTO v_enrolled_count
+                    FROM takes
+                    WHERE section_id = p_section_id;
+
+                    IF v_capacity <= 0 OR v_enrolled_count >= v_capacity THEN
+                        ROLLBACK;
+                        SELECT 0 AS ok, '选课失败：该开课节容量已满' AS message;
+                    ELSE
+                        SELECT COUNT(*), COALESCE(SUM(CASE WHEN major_id = v_student_major THEN 1 ELSE 0 END), 0)
+                        INTO v_restriction_count, v_allowed_count
+                        FROM restriction
+                        WHERE section_id = p_section_id;
+
+                        IF v_restriction_count > 0 AND v_allowed_count = 0 THEN
+                            ROLLBACK;
+                            SELECT 0 AS ok, '选课失败：你的所属专业不在该课程允许的限选专业范围内！' AS message;
+                        ELSE
+                            SELECT COUNT(*) INTO v_conflict_count
+                            FROM schedule sch_new
+                            JOIN takes tk ON tk.student_id = p_student_id
+                            JOIN section old_sec
+                              ON old_sec.section_id = tk.section_id
+                             AND old_sec.year = p_year
+                             AND old_sec.semester = p_semester
+                             AND old_sec.section_id <> p_section_id
+                            JOIN schedule sch_old ON sch_old.section_id = old_sec.section_id
+                            WHERE sch_new.section_id = p_section_id
+                              AND sch_new.day_of_week = sch_old.day_of_week
+                              AND COALESCE(sch_new.week_start, 1) <= COALESCE(sch_old.week_end, p_total_weeks)
+                              AND COALESCE(sch_new.week_end, p_total_weeks) >= COALESCE(sch_old.week_start, 1)
+                              AND sch_new.start_time < sch_old.end_time
+                              AND sch_new.end_time > sch_old.start_time;
+
+                            IF v_conflict_count > 0 THEN
+                                SELECT c_old.name, sch_new.day_of_week, sch_new.start_time, sch_new.end_time
+                                INTO v_conflict_course_name, v_conflict_day, v_new_start_time, v_new_end_time
+                                FROM schedule sch_new
+                                JOIN takes tk ON tk.student_id = p_student_id
+                                JOIN section old_sec
+                                  ON old_sec.section_id = tk.section_id
+                                 AND old_sec.year = p_year
+                                 AND old_sec.semester = p_semester
+                                 AND old_sec.section_id <> p_section_id
+                                JOIN schedule sch_old ON sch_old.section_id = old_sec.section_id
+                                JOIN course c_old ON c_old.course_id = old_sec.course_id
+                                WHERE sch_new.section_id = p_section_id
+                                  AND sch_new.day_of_week = sch_old.day_of_week
+                                  AND COALESCE(sch_new.week_start, 1) <= COALESCE(sch_old.week_end, p_total_weeks)
+                                  AND COALESCE(sch_new.week_end, p_total_weeks) >= COALESCE(sch_old.week_start, 1)
+                                  AND sch_new.start_time < sch_old.end_time
+                                  AND sch_new.end_time > sch_old.start_time
+                                LIMIT 1;
+
+                                ROLLBACK;
+                                SELECT 0 AS ok,
+                                       CONCAT('选课失败：与已选课程时间冲突（',
+                                              v_conflict_course_name,
+                                              '，周',
+                                              v_conflict_day,
+                                              ' ',
+                                              TIME_FORMAT(v_new_start_time, '%H:%i'),
+                                              '-',
+                                              TIME_FORMAT(v_new_end_time, '%H:%i'),
+                                              '）') AS message;
+                            ELSE
+                                INSERT INTO takes (student_id, section_id, enrolled_at)
+                                VALUES (p_student_id, p_section_id, NOW());
+
+                                COMMIT;
+                                SELECT 1 AS ok, '选课成功' AS message;
+                            END IF;
+                        END IF;
+                    END IF;
+                END IF;
+            END IF;
+        END IF;
+    END IF;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for sp_project_student_drop_section
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `sp_project_student_drop_section`;
+delimiter ;;
+CREATE PROCEDURE `sp_project_student_drop_section`(IN p_student_id INT UNSIGNED,
+    IN p_section_id INT UNSIGNED,
+    IN p_year INT,
+    IN p_semester VARCHAR(20))
+BEGIN
+    DECLARE v_section_exists INT DEFAULT 0;
+    DECLARE v_is_open INT DEFAULT 0;
+    DECLARE v_deleted INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 0 AS ok, '退选异常：数据库异常' AS message;
+    END;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*) INTO v_section_exists
+    FROM section
+    WHERE section_id = p_section_id;
+
+    IF v_section_exists = 0 THEN
+        ROLLBACK;
+        SELECT 0 AS ok, '退选失败：未找到开课节信息' AS message;
+    ELSE
+        SELECT (enrollment_start IS NOT NULL
+                AND enrollment_end IS NOT NULL
+                AND NOW() BETWEEN enrollment_start AND enrollment_end)
+        INTO v_is_open
+        FROM section
+        WHERE section_id = p_section_id
+        FOR UPDATE;
+
+        IF v_is_open <> 1 THEN
+            ROLLBACK;
+            SELECT 0 AS ok, '不在退选时间范围内，禁止退选' AS message;
+        ELSE
+            DELETE t
+            FROM takes t
+            JOIN section sec ON sec.section_id = t.section_id
+            WHERE t.student_id = p_student_id
+              AND t.section_id = p_section_id
+              AND sec.year = p_year
+              AND sec.semester = p_semester;
+
+            SET v_deleted = ROW_COUNT();
+
+            IF v_deleted > 0 THEN
+                COMMIT;
+                SELECT 1 AS ok, '退选成功' AS message;
+            ELSE
+                ROLLBACK;
+                SELECT 0 AS ok, '未找到您可以退选的该课程记录，或不在允许的学期内。' AS message;
+            END IF;
+        END IF;
+    END IF;
+END
+;;
+delimiter ;
 -- ----------------------------
 -- Procedure structure for sp_project_get_classrooms
 -- ----------------------------
