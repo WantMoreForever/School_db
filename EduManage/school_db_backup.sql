@@ -1,5 +1,4 @@
 
-
 SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS `school_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `school_db`;
@@ -646,15 +645,27 @@ CREATE PROCEDURE `sp_add_schedule`(IN p_section_id INT UNSIGNED,
     OUT p_success BOOLEAN,
     OUT p_message VARCHAR(255))
 BEGIN
+    DECLARE v_teaches INT DEFAULT 0;
     DECLARE v_section_id INT UNSIGNED;
+    DECLARE v_section_capacity SMALLINT UNSIGNED DEFAULT 0;
+    DECLARE v_classroom_exists INT DEFAULT 0;
+    DECLARE v_classroom_capacity INT UNSIGNED DEFAULT 0;
+    DECLARE v_classroom_label VARCHAR(160) DEFAULT '';
     DECLARE v_room_conflict INT;
     DECLARE v_teacher_conflict INT;
 
-    SELECT section_id INTO v_section_id
-    FROM teaching
-    WHERE teacher_id = p_teacher_id AND section_id = p_section_id;
+    SELECT COUNT(*), COALESCE(MAX(sec.section_id), 0), COALESCE(MAX(sec.capacity), 0)
+    INTO v_teaches, v_section_id, v_section_capacity
+    FROM teaching tg
+    JOIN section sec ON sec.section_id = tg.section_id
+    WHERE tg.teacher_id = p_teacher_id AND tg.section_id = p_section_id;
 
-    IF v_section_id IS NULL THEN
+    SELECT COUNT(*), COALESCE(MAX(capacity), 0), COALESCE(MAX(CONCAT(building, '-', room_number)), '')
+    INTO v_classroom_exists, v_classroom_capacity, v_classroom_label
+    FROM classroom
+    WHERE classroom_id = p_classroom_id;
+
+    IF v_teaches = 0 THEN
         SET p_success = FALSE;
         SET p_message = 'Teacher does not teach this section';
         SET p_schedule_id = NULL;
@@ -665,6 +676,16 @@ BEGIN
     ELSEIF p_day_of_week < 1 OR p_day_of_week > 7 THEN
         SET p_success = FALSE;
         SET p_message = 'Day of week must be between 1 and 7';
+        SET p_schedule_id = NULL;
+    ELSEIF v_classroom_exists = 0 THEN
+        SET p_success = FALSE;
+        SET p_message = 'Classroom not found';
+        SET p_schedule_id = NULL;
+    ELSEIF v_section_capacity > v_classroom_capacity THEN
+        SET p_success = FALSE;
+        SET p_message = CONCAT('Classroom capacity is insufficient: ', v_classroom_label,
+                               ' holds ', v_classroom_capacity,
+                               ' students, but section capacity is ', v_section_capacity);
         SET p_schedule_id = NULL;
     ELSE
         SET v_room_conflict = fn_check_room_conflict(
@@ -3046,21 +3067,41 @@ CREATE PROCEDURE `sp_update_schedule`(IN p_schedule_id INT UNSIGNED,
     OUT p_success BOOLEAN,
     OUT p_message VARCHAR(255))
 BEGIN
+    DECLARE v_teaches INT DEFAULT 0;
     DECLARE v_section_id INT UNSIGNED;
+    DECLARE v_section_capacity SMALLINT UNSIGNED DEFAULT 0;
+    DECLARE v_classroom_exists INT DEFAULT 0;
+    DECLARE v_classroom_capacity INT UNSIGNED DEFAULT 0;
+    DECLARE v_classroom_label VARCHAR(160) DEFAULT '';
     DECLARE v_room_conflict INT;
     DECLARE v_teacher_conflict INT;
 
-    SELECT s.section_id INTO v_section_id
+    SELECT COUNT(*), COALESCE(MAX(s.section_id), 0), COALESCE(MAX(sec.capacity), 0)
+    INTO v_teaches, v_section_id, v_section_capacity
     FROM schedule s
     JOIN teaching tg ON s.section_id = tg.section_id
+    JOIN section sec ON sec.section_id = s.section_id
     WHERE s.schedule_id = p_schedule_id AND tg.teacher_id = p_teacher_id;
 
-    IF v_section_id IS NULL THEN
+    SELECT COUNT(*), COALESCE(MAX(capacity), 0), COALESCE(MAX(CONCAT(building, '-', room_number)), '')
+    INTO v_classroom_exists, v_classroom_capacity, v_classroom_label
+    FROM classroom
+    WHERE classroom_id = p_classroom_id;
+
+    IF v_teaches = 0 THEN
         SET p_success = FALSE;
         SET p_message = 'Not authorized or schedule not found';
     ELSEIF p_end_time <= p_start_time THEN
         SET p_success = FALSE;
         SET p_message = 'End time must be after start time';
+    ELSEIF v_classroom_exists = 0 THEN
+        SET p_success = FALSE;
+        SET p_message = 'Classroom not found';
+    ELSEIF v_section_capacity > v_classroom_capacity THEN
+        SET p_success = FALSE;
+        SET p_message = CONCAT('Classroom capacity is insufficient: ', v_classroom_label,
+                               ' holds ', v_classroom_capacity,
+                               ' students, but section capacity is ', v_section_capacity);
     ELSE
         SET v_room_conflict = fn_check_room_conflict(
             p_classroom_id, p_day_of_week, p_start_time, p_end_time, p_schedule_id
@@ -3108,9 +3149,16 @@ CREATE PROCEDURE `sp_update_section_info`(IN  p_teacher_id    INT UNSIGNED,
     OUT p_message       VARCHAR(500))
 BEGIN
     DECLARE v_teaches INT DEFAULT 0;
+    DECLARE v_effective_capacity SMALLINT UNSIGNED DEFAULT 0;
+    DECLARE v_capacity_conflicts INT DEFAULT 0;
+    DECLARE v_min_classroom_capacity INT UNSIGNED DEFAULT 0;
 
     SELECT COUNT(*) INTO v_teaches FROM teaching
     WHERE teacher_id = p_teacher_id AND section_id = p_section_id;
+
+    SELECT COALESCE(p_capacity, capacity) INTO v_effective_capacity
+    FROM section
+    WHERE section_id = p_section_id;
 
     IF v_teaches = 0 THEN
         SET p_success = 0;
@@ -3119,15 +3167,30 @@ BEGIN
         SET p_success = 0;
         SET p_message = 'Capacity must be at least 1.';
     ELSE
-        UPDATE section
-        SET
-            capacity         = IFNULL(p_capacity, capacity),
-            enrollment_start = IFNULL(p_enroll_start, enrollment_start),
-            enrollment_end   = IFNULL(p_enroll_end,   enrollment_end)
-        WHERE section_id = p_section_id;
+        SELECT COUNT(*), COALESCE(MIN(cl.capacity), 0)
+        INTO v_capacity_conflicts, v_min_classroom_capacity
+        FROM schedule sch
+        JOIN classroom cl ON cl.classroom_id = sch.classroom_id
+        WHERE sch.section_id = p_section_id
+          AND v_effective_capacity > cl.capacity;
 
-        SET p_success = 1;
-        SET p_message = 'Section info updated successfully.';
+        IF v_capacity_conflicts > 0 THEN
+            SET p_success = 0;
+            SET p_message = CONCAT('Classroom capacity is insufficient: at least one scheduled classroom holds only ',
+                                   v_min_classroom_capacity,
+                                   ' students, but section capacity is ',
+                                   v_effective_capacity);
+        ELSE
+            UPDATE section
+            SET
+                capacity         = IFNULL(p_capacity, capacity),
+                enrollment_start = IFNULL(p_enroll_start, enrollment_start),
+                enrollment_end   = IFNULL(p_enroll_end,   enrollment_end)
+            WHERE section_id = p_section_id;
+
+            SET p_success = 1;
+            SET p_message = 'Section info updated successfully.';
+        END IF;
     END IF;
 END
 ;;
