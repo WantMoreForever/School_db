@@ -1,18 +1,4 @@
-/*
- Navicat Premium Dump SQL
 
- Source Server         : localhost_3306
- Source Server Type    : MySQL
- Source Server Version : 80012 (8.0.12)
- Source Host           : localhost:3306
- Source Schema         : school_db
-
- Target Server Type    : MySQL
- Target Server Version : 80012 (8.0.12)
- File Encoding         : 65001
-
- Date: 23/04/2026 20:27:58
-*/
 
 SET NAMES utf8mb4;
 CREATE DATABASE IF NOT EXISTS `school_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
